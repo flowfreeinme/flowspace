@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sketch 001 — Board Card AI Toolbar</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; padding-top: 44px; }
+
+/* ── Variant nav ── */
+#variant-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+  background: var(--surface-1); border-bottom: 1px solid var(--surface-4);
+  padding: 6px 12px; display: flex; gap: 6px; align-items: center;
+}
+.variant-tab {
+  padding: 5px 14px; border-radius: var(--radius-sm); border: 1px solid transparent;
+  background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer;
+  font-family: var(--font); transition: all 0.12s;
+}
+.variant-tab:hover { color: var(--text); background: var(--surface-3); }
+.variant-tab.active { background: var(--surface-3); color: var(--text); border-color: var(--surface-4); }
+.variant-tab.winner { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(124,106,247,0.08) !important; }
+.variant { display: none; }
+.variant.active { display: block; }
+#variant-nav .hint { color: var(--text-dim); font-size: 11px; margin-left: auto; margin-right: 90px; }
+
+/* ── Board canvas ── */
+.board {
+  width: 100%; min-height: calc(100vh - 44px); position: relative; overflow: hidden;
+  background: var(--bg);
+  background-image: radial-gradient(circle, var(--surface-4) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.board-inner { padding: 48px 48px; display: flex; gap: 24px; align-items: flex-start; }
+
+/* ── Section column ── */
+.section { width: 280px; flex-shrink: 0; }
+.section-header {
+  background: var(--surface-2); border: 1px solid var(--surface-4);
+  border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 10px;
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-header .dot { width: 8px; height: 8px; border-radius: 50%; }
+.section-header .count { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+
+/* ── Board card ── */
+.card {
+  background: var(--surface-2); border: 1px solid var(--surface-4);
+  border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 8px;
+  font-size: 13px; color: var(--text); line-height: 1.5;
+  cursor: pointer; position: relative; transition: border-color 0.12s, box-shadow 0.12s;
+  user-select: none;
+}
+.card:hover { background: var(--surface-3); }
+.card.editing {
+  border-color: var(--accent); background: var(--surface-2);
+  box-shadow: 0 0 0 3px rgba(124,106,247,0.12);
+  cursor: text; user-select: text;
+}
+.card .card-meta { display: flex; gap: 5px; margin-top: 8px; }
+.tag {
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--surface-4); color: var(--text-muted);
+}
+.card .edit-hint {
+  position: absolute; top: 7px; right: 9px;
+  font-size: 10px; color: var(--text-dim); opacity: 0; transition: opacity 0.12s;
+  pointer-events: none;
+}
+.card:hover:not(.editing) .edit-hint { opacity: 1; }
+
+/* ── Selected text highlight ── */
+.sel { background: rgba(124,106,247,0.22); border-radius: 3px; }
+
+/* ═══════════════════════════════════
+   VARIANT A — Floating Pill (WINNER)
+   ═══════════════════════════════════ */
+.pill {
+  position: absolute; z-index: 200;
+  background: var(--surface-3); border: 1px solid var(--surface-4);
+  border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  padding: 4px 5px; display: flex; align-items: center; gap: 1px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  transform: translateY(4px);
+  white-space: nowrap;
+}
+.pill.visible {
+  opacity: 1; pointer-events: all; transform: translateY(0);
+}
+.pill button {
+  padding: 5px 10px; border-radius: 7px; border: none;
+  background: transparent; color: var(--text-muted);
+  font-size: 11.5px; cursor: pointer; font-family: var(--font);
+  transition: background 0.1s, color 0.1s; white-space: nowrap;
+}
+.pill button:hover { background: var(--surface-4); color: var(--text); }
+.pill .sep { width: 1px; height: 14px; background: var(--surface-4); margin: 0 3px; flex-shrink: 0; }
+.pill .pill-custom {
+  background: var(--surface-4); border: none; color: var(--text-muted);
+  font-size: 11px; padding: 4px 8px; border-radius: 6px;
+  width: 88px; outline: none; font-family: var(--font); transition: border 0.1s;
+}
+.pill .pill-custom::placeholder { color: var(--text-dim); }
+.pill .pill-custom:focus { outline: 1px solid var(--accent); }
+
+/* ── Loading dots (shared) ── */
+.dots { display: flex; gap: 3px; align-items: center; padding: 6px 10px; }
+.dots span {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.dots span:nth-child(2) { animation-delay: 0.15s; }
+.dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pulse {
+  0%,100% { transform: translateY(0); opacity: 0.4; }
+  50%      { transform: translateY(-3px); opacity: 1; }
+}
+
+/* ═══════════════════════════════════
+   VARIANT B — Card Bottom Strip
+   ═══════════════════════════════════ */
+.strip {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--surface-3); border-top: 1px solid var(--surface-4);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: none; align-items: center; padding: 6px 10px; gap: 4px;
+}
+.strip-label { font-size: 10px; color: var(--text-dim); margin-right: 2px; letter-spacing: 0.3px; }
+.strip button {
+  padding: 4px 9px; border-radius: 5px; border: none;
+  background: var(--surface-4); color: var(--text-muted);
+  font-size: 11px; cursor: pointer; font-family: var(--font); transition: all 0.1s;
+}
+.strip button:hover { background: var(--accent); color: white; }
+.strip .strip-sep { width: 1px; height: 14px; background: var(--surface-4); margin: 0 2px; }
+.card.has-strip { padding-bottom: 42px; }
+.card.has-strip .strip { display: flex; }
+
+/* ═══════════════════════════════════
+   VARIANT C — Rich Popover
+   ═══════════════════════════════════ */
+.popover {
+  position: absolute; z-index: 200;
+  background: var(--surface-1); border: 1px solid var(--surface-4);
+  border-radius: var(--radius-md); box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,106,247,0.15);
+  padding: 10px; width: 224px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  transform: translateY(4px);
+}
+.popover.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
+.popover-head {
+  font-size: 10px; color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 0.6px; margin-bottom: 8px; padding: 0 2px;
+}
+.popover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.popover-btn {
+  padding: 7px 9px; border-radius: var(--radius-sm); border: 1px solid var(--surface-4);
+  background: var(--surface-3); color: var(--text-muted);
+  font-size: 11.5px; cursor: pointer; font-family: var(--font);
+  transition: all 0.1s; text-align: left; line-height: 1.3;
+}
+.popover-btn:hover { border-color: var(--accent); color: var(--text); background: rgba(124,106,247,0.08); }
+.popover-btn .pb-icon { font-style: normal; margin-right: 3px; }
+.popover-div { height: 1px; background: var(--surface-4); margin: 8px 0; }
+.popover-custom { display: flex; gap: 5px; }
+.popover-custom input {
+  flex: 1; background: var(--surface-3); border: 1px solid var(--surface-4);
+  color: var(--text); font-size: 11.5px; padding: 5px 8px; border-radius: var(--radius-sm);
+  outline: none; font-family: var(--font);
+}
+.popover-custom input:focus { border-color: var(--accent); }
+.popover-custom button {
+  padding: 5px 10px; border-radius: var(--radius-sm); border: none;
+  background: var(--accent); color: white; font-size: 11px;
+  cursor: pointer; font-family: var(--font); transition: background 0.1s;
+}
+.popover-custom button:hover { background: var(--accent-hover); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%) translateY(6px);
+  background: var(--surface-3); border: 1px solid var(--surface-4);
+  color: var(--text); padding: 7px 16px; border-radius: var(--radius-md);
+  font-size: 12px; opacity: 0; transition: all 0.18s; pointer-events: none; z-index: 9997;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Sketch toolbar ── */
+#sketch-tools {
+  position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+  font-family: var(--font); font-size: 11px;
+  background: rgba(0,0,0,0.72); color: white; padding: 7px 11px;
+  border-radius: 8px; opacity: 0.35; transition: opacity 0.2s;
+}
+#sketch-tools:hover { opacity: 1; }
+#sketch-tools select {
+  background: #333; color: white; border: 1px solid #555; border-radius: 4px;
+  font-size: 11px; padding: 2px 4px;
+}
+#sketch-tools label { color: #aaa; margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Variant nav -->
+<div id="variant-nav">
+  <button class="variant-tab winner active" onclick="showVariant('a',this)">A: Floating Pill ★</button>
+  <button class="variant-tab" onclick="showVariant('b',this)">B: Card Strip</button>
+  <button class="variant-tab" onclick="showVariant('c',this)">C: Rich Popover</button>
+  <span class="hint">Click a card to edit · select text to see toolbar</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT A ★ — Floating Pill (WINNER)
+     Actions: Clarify · Shorten · Make actionable · Fix grammar
+     ═══════════════════════════════════════════════════════════ -->
+<div id="variant-a" class="variant active">
+  <div class="board">
+    <div class="board-inner">
+
+      <!-- Section: In Progress -->
+      <div class="section">
+        <div class="section-header">
+          <div class="dot" style="background:#7c6af7"></div>
+          In Progress <span class="count">3</span>
+        </div>
+
+        <!-- Demo card — pill shown by default to illustrate state -->
+        <div class="card editing" id="card-a1" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a1">Redesign the <span class="sel" id="sel-a1">onboarding flow for mobile users</span> with better step indicators and reduced friction</div>
+          <div class="card-meta"><span class="tag">Design</span><span class="tag">Q2</span></div>
+
+          <!-- Pill — positioned above the highlighted span -->
+          <div class="pill visible" id="pill-a1" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a1',event)">Clarify</button>
+            <button onclick="applyA('shorten','a1',event)">Shorten</button>
+            <button onclick="applyA('actionable','a1',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a1',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a1',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+
+        <div class="card" id="card-a2" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a2">Update API rate limits documentation and add code examples for common integrations</div>
+          <div class="card-meta"><span class="tag">Dev</span></div>
+          <div class="pill" id="pill-a2" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a2',event)">Clarify</button>
+            <button onclick="applyA('shorten','a2',event)">Shorten</button>
+            <button onclick="applyA('actionable','a2',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a2',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a2',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+
+        <div class="card" id="card-a3" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a3">Fix broken image uploads on Safari — intermittent timeout errors reported by 3 users</div>
+          <div class="card-meta"><span class="tag">Bug</span><span class="tag">Safari</span></div>
+          <div class="pill" id="pill-a3" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a3',event)">Clarify</button>
+            <button onclick="applyA('shorten','a3',event)">Shorten</button>
+            <button onclick="applyA('actionable','a3',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a3',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a3',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Review -->
+      <div class="section">
+        <div class="section-header">
+          <div class="dot" style="background:#f59e0b"></div>
+          Review <span class="count">2</span>
+        </div>
+        <div class="card" id="card-a4" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a4">Analytics dashboard — weekly active user cohort view</div>
+          <div class="card-meta"><span class="tag">Analytics</span></div>
+          <div class="pill" id="pill-a4" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a4',event)">Clarify</button>
+            <button onclick="applyA('shorten','a4',event)">Shorten</button>
+            <button onclick="applyA('actionable','a4',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a4',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a4',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+        <div class="card" id="card-a5" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a5">Pricing page copy revisions with new enterprise tier messaging</div>
+          <div class="card-meta"><span class="tag">Marketing</span></div>
+          <div class="pill" id="pill-a5" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a5',event)">Clarify</button>
+            <button onclick="applyA('shorten','a5',event)">Shorten</button>
+            <button onclick="applyA('actionable','a5',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a5',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a5',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Done -->
+      <div class="section">
+        <div class="section-header">
+          <div class="dot" style="background:#22c55e"></div>
+          Done <span class="count">1</span>
+        </div>
+        <div class="card" id="card-a6" onclick="focusCardA(event, this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-a6">Set up CI/CD pipeline for staging environment with auto-deploy on merge</div>
+          <div class="card-meta"><span class="tag">DevOps</span></div>
+          <div class="pill" id="pill-a6" style="top:-42px; left:0;">
+            <button onclick="applyA('clarify','a6',event)">Clarify</button>
+            <button onclick="applyA('shorten','a6',event)">Shorten</button>
+            <button onclick="applyA('actionable','a6',event)">Make actionable</button>
+            <button onclick="applyA('grammar','a6',event)">Fix grammar</button>
+            <div class="sep"></div>
+            <input class="pill-custom" type="text" placeholder="Custom…"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){applyA('custom','a6',event,this.value)}"
+              onclick="event.stopPropagation()">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT B — Card Bottom Strip
+     Always-visible AI strip while card is in focus
+     ═══════════════════════════════════════════════════════════ -->
+<div id="variant-b" class="variant">
+  <div class="board">
+    <div class="board-inner">
+      <div class="section">
+        <div class="section-header">
+          <div class="dot" style="background:#7c6af7"></div>
+          In Progress <span class="count">3</span>
+        </div>
+
+        <div class="card editing has-strip" id="card-b1" onclick="focusCardB(event,this)" style="border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,106,247,0.12);cursor:text;">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b1">Redesign the onboarding flow for mobile users with better step indicators and reduced friction</div>
+          <div class="card-meta" style="margin-bottom:6px;"><span class="tag">Design</span><span class="tag">Q2</span></div>
+          <div class="strip">
+            <span class="strip-label">AI</span>
+            <button onclick="applyB('clarify','b1',event)">Clarify</button>
+            <button onclick="applyB('shorten','b1',event)">Shorten</button>
+            <button onclick="applyB('actionable','b1',event)">Make actionable</button>
+            <button onclick="applyB('grammar','b1',event)">Fix grammar</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-b2" onclick="focusCardB(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b2">Update API rate limits documentation and add code examples</div>
+          <div class="card-meta"><span class="tag">Dev</span></div>
+          <div class="strip">
+            <span class="strip-label">AI</span>
+            <button onclick="applyB('clarify','b2',event)">Clarify</button>
+            <button onclick="applyB('shorten','b2',event)">Shorten</button>
+            <button onclick="applyB('actionable','b2',event)">Make actionable</button>
+            <button onclick="applyB('grammar','b2',event)">Fix grammar</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-b3" onclick="focusCardB(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b3">Fix broken image uploads on Safari — intermittent timeout errors</div>
+          <div class="card-meta"><span class="tag">Bug</span></div>
+          <div class="strip">
+            <span class="strip-label">AI</span>
+            <button onclick="applyB('clarify','b3',event)">Clarify</button>
+            <button onclick="applyB('shorten','b3',event)">Shorten</button>
+            <button onclick="applyB('actionable','b3',event)">Make actionable</button>
+            <button onclick="applyB('grammar','b3',event)">Fix grammar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><div class="dot" style="background:#f59e0b"></div>Review <span class="count">2</span></div>
+        <div class="card" id="card-b4" onclick="focusCardB(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b4">Analytics dashboard — weekly active user cohort view</div>
+          <div class="card-meta"><span class="tag">Analytics</span></div>
+          <div class="strip"><span class="strip-label">AI</span><button onclick="applyB('clarify','b4',event)">Clarify</button><button onclick="applyB('shorten','b4',event)">Shorten</button><button onclick="applyB('actionable','b4',event)">Make actionable</button><button onclick="applyB('grammar','b4',event)">Fix grammar</button></div>
+        </div>
+        <div class="card" id="card-b5" onclick="focusCardB(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b5">Pricing page copy revisions with new enterprise tier messaging</div>
+          <div class="card-meta"><span class="tag">Marketing</span></div>
+          <div class="strip"><span class="strip-label">AI</span><button onclick="applyB('clarify','b5',event)">Clarify</button><button onclick="applyB('shorten','b5',event)">Shorten</button><button onclick="applyB('actionable','b5',event)">Make actionable</button><button onclick="applyB('grammar','b5',event)">Fix grammar</button></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><div class="dot" style="background:#22c55e"></div>Done <span class="count">1</span></div>
+        <div class="card" id="card-b6" onclick="focusCardB(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-b6">Set up CI/CD pipeline for staging environment</div>
+          <div class="card-meta"><span class="tag">DevOps</span></div>
+          <div class="strip"><span class="strip-label">AI</span><button onclick="applyB('clarify','b6',event)">Clarify</button><button onclick="applyB('shorten','b6',event)">Shorten</button><button onclick="applyB('actionable','b6',event)">Make actionable</button><button onclick="applyB('grammar','b6',event)">Fix grammar</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT C — Rich Popover
+     Appears above card on focus, labeled action grid
+     ═══════════════════════════════════════════════════════════ -->
+<div id="variant-c" class="variant">
+  <div class="board">
+    <div class="board-inner">
+      <div class="section">
+        <div class="section-header">
+          <div class="dot" style="background:#7c6af7"></div>
+          In Progress <span class="count">3</span>
+        </div>
+
+        <div class="card editing" id="card-c1" onclick="focusCardC(event,this)" style="border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,106,247,0.12);cursor:text;margin-top:160px;">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-c1">Redesign the <span class="sel">onboarding flow for mobile users</span> with better step indicators and reduced friction</div>
+          <div class="card-meta"><span class="tag">Design</span><span class="tag">Q2</span></div>
+          <div class="popover visible" id="pop-c1" style="bottom:calc(100% + 8px); left:0;">
+            <div class="popover-head">✦ AI Text Actions</div>
+            <div class="popover-grid">
+              <button class="popover-btn" onclick="applyC('clarify','c1',event)"><i class="pb-icon">◈</i> Clarify</button>
+              <button class="popover-btn" onclick="applyC('shorten','c1',event)"><i class="pb-icon">↙</i> Shorten</button>
+              <button class="popover-btn" onclick="applyC('actionable','c1',event)"><i class="pb-icon">→</i> Make actionable</button>
+              <button class="popover-btn" onclick="applyC('grammar','c1',event)"><i class="pb-icon">✓</i> Fix grammar</button>
+            </div>
+            <div class="popover-div"></div>
+            <div class="popover-custom">
+              <input type="text" id="custom-c1" placeholder="Custom instruction…" onclick="event.stopPropagation()">
+              <button onclick="applyC('custom','c1',event)">Go</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="card-c2" onclick="focusCardC(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-c2">Update API rate limits documentation and add code examples for common integrations</div>
+          <div class="card-meta"><span class="tag">Dev</span></div>
+          <div class="popover" id="pop-c2" style="bottom:calc(100% + 8px); left:0;">
+            <div class="popover-head">✦ AI Text Actions</div>
+            <div class="popover-grid">
+              <button class="popover-btn" onclick="applyC('clarify','c2',event)"><i class="pb-icon">◈</i> Clarify</button>
+              <button class="popover-btn" onclick="applyC('shorten','c2',event)"><i class="pb-icon">↙</i> Shorten</button>
+              <button class="popover-btn" onclick="applyC('actionable','c2',event)"><i class="pb-icon">→</i> Make actionable</button>
+              <button class="popover-btn" onclick="applyC('grammar','c2',event)"><i class="pb-icon">✓</i> Fix grammar</button>
+            </div>
+            <div class="popover-div"></div>
+            <div class="popover-custom">
+              <input type="text" id="custom-c2" placeholder="Custom instruction…" onclick="event.stopPropagation()">
+              <button onclick="applyC('custom','c2',event)">Go</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="card-c3" onclick="focusCardC(event,this)">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-c3">Fix broken image uploads on Safari — timeout errors</div>
+          <div class="card-meta"><span class="tag">Bug</span></div>
+          <div class="popover" id="pop-c3" style="bottom:calc(100% + 8px); left:0;">
+            <div class="popover-head">✦ AI Text Actions</div>
+            <div class="popover-grid">
+              <button class="popover-btn" onclick="applyC('clarify','c3',event)"><i class="pb-icon">◈</i> Clarify</button>
+              <button class="popover-btn" onclick="applyC('shorten','c3',event)"><i class="pb-icon">↙</i> Shorten</button>
+              <button class="popover-btn" onclick="applyC('actionable','c3',event)"><i class="pb-icon">→</i> Make actionable</button>
+              <button class="popover-btn" onclick="applyC('grammar','c3',event)"><i class="pb-icon">✓</i> Fix grammar</button>
+            </div>
+            <div class="popover-div"></div>
+            <div class="popover-custom">
+              <input type="text" id="custom-c3" placeholder="Custom instruction…" onclick="event.stopPropagation()">
+              <button onclick="applyC('custom','c3',event)">Go</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><div class="dot" style="background:#f59e0b"></div>Review <span class="count">2</span></div>
+        <div class="card" onclick="focusCardC(event,this)" id="card-c4">
+          <span class="edit-hint">click to edit</span>
+          <div class="card-text" id="text-c4">Analytics dashboard — weekly active user cohort view</div>
+          <div class="card-meta"><span class="tag">Analytics</span></div>
+          <div class="popover" id="pop-c4" style="bottom:calc(100% + 8px); left:0;"><div class="popover-head">✦ AI Text Actions</div><div class="popover-grid"><button class="popover-btn" onclick="applyC('clarify','c4',event)"><i class="pb-icon">◈</i> Clarify</button><button class="popover-btn" onclick="applyC('shorten','c4',event)"><i class="pb-icon">↙</i> Shorten</button><button class="popover-btn" onclick="applyC('actionable','c4',event)"><i class="pb-icon">→</i> Make actionable</button><button class="popover-btn" onclick="applyC('grammar','c4',event)"><i class="pb-icon">✓</i> Fix grammar</button></div><div class="popover-div"></div><div class="popover-custom"><input type="text" id="custom-c4" placeholder="Custom instruction…" onclick="event.stopPropagation()"><button onclick="applyC('custom','c4',event)">Go</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Sketch toolbar -->
+<div id="sketch-tools" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.35'">
+  <label>Theme:</label>
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value">
+    <option value="default.css">Default (Dark)</option>
+  </select>
+</div>
+
+<script>
+// ── Variant switching ──────────────────────────────────
+function showVariant(id, btn) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Toast ──────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ── Card text transforms (realistic for task text) ─────
+const transforms = {
+  clarify: {
+    'a1': 'Redesign mobile onboarding — add numbered step indicators and cut sign-up fields from 8 to 3',
+    'a2': 'Write API rate-limit docs with working curl + Python + JS code examples for each endpoint',
+    'a3': 'Fix Safari image upload timeout: reproduces on files >2 MB in WebKit 17.x, 3 confirmed reports',
+    'a4': 'Add weekly cohort retention chart to analytics dashboard — DAU / WAU breakdown by signup week',
+    'a5': 'Rewrite pricing page to lead with Enterprise tier — new headline, feature comparison table, CTA',
+    'a6': 'Automate staging deploys: merge to main triggers build, test, and deploy via GitHub Actions',
+    'b1': 'Redesign mobile onboarding — add numbered step indicators and cut sign-up fields from 8 to 3',
+    'b2': 'Write API rate-limit docs with working curl + Python + JS code examples',
+    'b3': 'Fix Safari image upload timeout: reproduces on files >2 MB in WebKit 17.x',
+    'b4': 'Add weekly cohort retention chart — DAU / WAU breakdown by signup week',
+    'b5': 'Rewrite pricing page to lead with Enterprise tier — new headline and CTA',
+    'b6': 'Automate staging deploys: merge to main triggers build, test, and deploy',
+    'c1': 'Redesign mobile onboarding — add numbered step indicators and cut sign-up fields from 8 to 3',
+    'c2': 'Write API rate-limit docs with working curl + Python + JS code examples',
+    'c3': 'Fix Safari image upload timeout: reproduces on files >2 MB in WebKit 17.x',
+    'c4': 'Add weekly cohort retention chart — DAU / WAU breakdown by signup week',
+  },
+  shorten: {
+    'a1': 'Simplify mobile onboarding flow',
+    'a2': 'Document API rate limits with examples',
+    'a3': 'Fix Safari image upload timeouts',
+    'a4': 'Add cohort view to analytics dashboard',
+    'a5': 'Update pricing page for enterprise tier',
+    'a6': 'Set up staging CI/CD pipeline',
+    'b1': 'Simplify mobile onboarding flow',
+    'b2': 'Document API rate limits with examples',
+    'b3': 'Fix Safari image upload timeouts',
+    'b4': 'Add cohort view to analytics dashboard',
+    'b5': 'Update pricing page for enterprise tier',
+    'b6': 'Set up staging CI/CD pipeline',
+    'c1': 'Simplify mobile onboarding flow',
+    'c2': 'Document API rate limits with examples',
+    'c3': 'Fix Safari image upload timeouts',
+    'c4': 'Add cohort view to analytics dashboard',
+  },
+  actionable: {
+    'a1': 'Redesign mobile onboarding flow — ship step indicators and reduce friction by end of Q2',
+    'a2': 'Write and publish API rate-limit docs with code examples for top 3 integrations',
+    'a3': 'Reproduce and patch Safari image upload timeout — target fix in next release',
+    'a4': 'Build and ship weekly cohort view in analytics dashboard',
+    'a5': 'Rewrite and publish pricing page copy with enterprise messaging',
+    'a6': 'Configure and enable CI/CD auto-deploy pipeline for staging',
+    'b1': 'Redesign mobile onboarding — ship step indicators by end of Q2',
+    'b2': 'Write and publish API docs with working code examples',
+    'b3': 'Reproduce and patch Safari image upload timeout',
+    'b4': 'Build and ship weekly cohort view in analytics',
+    'b5': 'Rewrite and publish pricing page with enterprise messaging',
+    'b6': 'Configure and enable CI/CD staging pipeline',
+    'c1': 'Redesign mobile onboarding — ship step indicators by end of Q2',
+    'c2': 'Write and publish API docs with working code examples',
+    'c3': 'Reproduce and patch Safari image upload timeout',
+    'c4': 'Build and ship weekly cohort view in analytics',
+  },
+  grammar: {
+    'a1': 'Redesign the onboarding flow for mobile users with better step indicators and reduced friction',
+    'a2': 'Update API rate-limits documentation and add code examples for common integrations',
+    'a3': 'Fix broken image uploads on Safari — intermittent timeout errors reported by 3 users',
+    'a4': 'Analytics dashboard — weekly active user cohort view',
+    'a5': 'Pricing page copy revisions with new enterprise-tier messaging',
+    'a6': 'Set up a CI/CD pipeline for the staging environment with auto-deploy on merge',
+    'b1': 'Redesign the onboarding flow for mobile users with better step indicators',
+    'b2': 'Update API rate-limits documentation and add code examples',
+    'b3': 'Fix broken image uploads on Safari — intermittent timeout errors',
+    'b4': 'Analytics dashboard — weekly active user cohort view',
+    'b5': 'Pricing page copy revisions with new enterprise-tier messaging',
+    'b6': 'Set up CI/CD pipeline for staging with auto-deploy on merge',
+    'c1': 'Redesign the onboarding flow for mobile users with better step indicators',
+    'c2': 'Update API rate-limits documentation and add code examples',
+    'c3': 'Fix broken image uploads on Safari — intermittent timeout errors',
+    'c4': 'Analytics dashboard — weekly active user cohort view',
+  },
+};
+
+function getTransform(type, id, customVal) {
+  if (type === 'custom') return customVal || 'Custom instruction applied';
+  return transforms[type]?.[id] ?? document.getElementById('text-' + id)?.textContent ?? '';
+}
+
+// ── Variant A ──────────────────────────────────────────
+let activeA = null;
+
+function focusCardA(e, card) {
+  if (e.target.closest('.pill')) return;
+  if (activeA && activeA !== card) {
+    activeA.classList.remove('editing');
+    activeA.querySelector('.pill')?.classList.remove('visible');
+  }
+  card.classList.add('editing');
+  card.querySelector('.pill')?.classList.add('visible');
+  activeA = card;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#variant-a .card') && activeA) {
+    activeA.classList.remove('editing');
+    activeA.querySelector('.pill')?.classList.remove('visible');
+    activeA = null;
+  }
+});
+
+function applyA(type, id, e, customVal) {
+  e?.stopPropagation();
+  const pill = document.getElementById('pill-' + id);
+  const textEl = document.getElementById('text-' + id);
+  if (!pill || !textEl) return;
+
+  const saved = pill.innerHTML;
+  pill.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+
+  setTimeout(() => {
+    pill.innerHTML = saved;
+    rebindPill(pill, id);
+    textEl.textContent = getTransform(type, id, customVal);
+    toast('✓ Card text updated');
+  }, 850);
+}
+
+function rebindPill(pill, id) {
+  const btns = pill.querySelectorAll('button');
+  const types = ['clarify','shorten','actionable','grammar'];
+  btns.forEach((b, i) => {
+    b.onclick = (e) => applyA(types[i], id, e);
+  });
+  const inp = pill.querySelector('.pill-custom');
+  if (inp) {
+    inp.onclick = e => e.stopPropagation();
+    inp.onkeydown = e => {
+      if (e.key === 'Enter' && inp.value.trim()) applyA('custom', id, e, inp.value);
+    };
+  }
+}
+
+// ── Variant B ──────────────────────────────────────────
+let activeB = null;
+
+function focusCardB(e, card) {
+  if (e.target.closest('.strip')) return;
+  if (activeB && activeB !== card) {
+    activeB.classList.remove('editing', 'has-strip');
+    activeB.style.cssText = '';
+  }
+  card.classList.add('editing', 'has-strip');
+  Object.assign(card.style, { borderColor: 'var(--accent)', boxShadow: '0 0 0 3px rgba(124,106,247,0.12)', cursor: 'text' });
+  activeB = card;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#variant-b .card') && activeB) {
+    activeB.classList.remove('editing', 'has-strip');
+    activeB.style.cssText = '';
+    activeB = null;
+  }
+});
+
+function applyB(type, id, e) {
+  e?.stopPropagation();
+  const card = document.getElementById('card-' + id);
+  const textEl = document.getElementById('text-' + id);
+  const strip = card?.querySelector('.strip');
+  if (!strip || !textEl) return;
+
+  const saved = strip.innerHTML;
+  strip.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  setTimeout(() => {
+    strip.innerHTML = saved;
+    rebindStrip(strip, id);
+    textEl.textContent = getTransform(type, id);
+    toast('✓ Card text updated');
+  }, 850);
+}
+
+function rebindStrip(strip, id) {
+  const btns = strip.querySelectorAll('button');
+  const types = ['clarify','shorten','actionable','grammar'];
+  btns.forEach((b, i) => { b.onclick = e => applyB(types[i], id, e); });
+}
+
+// ── Variant C ──────────────────────────────────────────
+let activeC = null;
+
+function focusCardC(e, card) {
+  if (e.target.closest('.popover')) return;
+  if (activeC && activeC !== card) {
+    activeC.classList.remove('editing');
+    activeC.querySelector('.popover')?.classList.remove('visible');
+    activeC.style.cssText = '';
+  }
+  card.classList.add('editing');
+  Object.assign(card.style, { borderColor: 'var(--accent)', boxShadow: '0 0 0 3px rgba(124,106,247,0.12)', cursor: 'text' });
+  card.querySelector('.popover')?.classList.add('visible');
+  activeC = card;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#variant-c .card') && activeC) {
+    activeC.classList.remove('editing');
+    activeC.querySelector('.popover')?.classList.remove('visible');
+    activeC.style.cssText = '';
+    activeC = null;
+  }
+});
+
+function applyC(type, id, e) {
+  e?.stopPropagation();
+  const pop = document.getElementById('pop-' + id);
+  const textEl = document.getElementById('text-' + id);
+  const customVal = document.getElementById('custom-' + id)?.value;
+  if (!pop || !textEl) return;
+
+  const saved = pop.innerHTML;
+  pop.innerHTML = '<div style="padding:18px;display:flex;justify-content:center;"><div class="dots"><span></span><span></span><span></span></div></div>';
+  setTimeout(() => {
+    pop.innerHTML = saved;
+    textEl.textContent = getTransform(type, id, customVal);
+    toast('✓ Card text updated');
+  }, 850);
+}
+</script>
+</body>
+</html>

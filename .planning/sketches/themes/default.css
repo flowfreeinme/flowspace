@@ -1,0 +1,18 @@
+:root {
+  --bg:        #0f0f0f;
+  --surface-1: #1a1a1a;
+  --surface-2: #242424;
+  --surface-3: #2e2e2e;
+  --surface-4: #383838;
+  --accent:    #7c6af7;
+  --accent-hover: #9080ff;
+  --text:      #e8e8e8;
+  --text-muted:#888;
+  --text-dim:  #555;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-panel: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-card:  0 2px 8px rgba(0,0,0,0.3);
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+}

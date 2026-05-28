@@ -1,0 +1,82 @@
+<h2>Kanban Board on Mobile</h2>
+<p class="subtitle">Drag-and-drop kanban columns don't translate well to touch. What's the right mobile approach?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:6px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #222;">
+          <span style="font-size:14px;">☰</span>
+          <span style="font-size:10px;flex:1;color:#fff;">📋 Sprint Board</span>
+        </div>
+        <div style="padding:8px;overflow-x:auto;display:flex;gap:6px;min-height:140px;">
+          <div style="min-width:100px;background:#222;border-radius:6px;padding:6px;">
+            <div style="font-size:9px;font-weight:600;color:#aaa;margin-bottom:4px;">TODO</div>
+            <div style="background:#2a2a3e;border-radius:4px;padding:4px;font-size:8px;margin-bottom:3px;">Task A</div>
+            <div style="background:#2a2a3e;border-radius:4px;padding:4px;font-size:8px;margin-bottom:3px;">Task B</div>
+          </div>
+          <div style="min-width:100px;background:#222;border-radius:6px;padding:6px;">
+            <div style="font-size:9px;font-weight:600;color:#aaa;margin-bottom:4px;">IN PROGRESS</div>
+            <div style="background:#2a2a3e;border-radius:4px;padding:4px;font-size:8px;margin-bottom:3px;">Task C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Horizontal Scroll</h3>
+      <p>Columns scroll left/right. Familiar Trello-style. Drag-and-drop disabled on touch, move cards via a tap menu instead.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:6px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #222;">
+          <span style="font-size:14px;">☰</span>
+          <span style="font-size:10px;flex:1;color:#fff;">📋 Sprint Board</span>
+        </div>
+        <div style="padding:8px;min-height:140px;">
+          <div style="background:#222;border-radius:6px;padding:6px;margin-bottom:5px;">
+            <div style="font-size:9px;font-weight:600;color:#7c6af7;margin-bottom:4px;">▾ TODO (2)</div>
+            <div style="background:#2a2a3e;border-radius:4px;padding:4px;font-size:8px;margin-bottom:3px;">Task A</div>
+            <div style="background:#2a2a3e;border-radius:4px;padding:4px;font-size:8px;">Task B</div>
+          </div>
+          <div style="background:#222;border-radius:6px;padding:6px;">
+            <div style="font-size:9px;font-weight:600;color:#aaa;margin-bottom:4px;">▸ IN PROGRESS (1)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Stacked Columns</h3>
+      <p>Columns stack vertically, each collapsible. All cards visible without horizontal scrolling.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:6px 10px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #222;">
+          <span style="font-size:14px;">☰</span>
+          <span style="font-size:10px;flex:1;color:#fff;">📋 Board</span>
+        </div>
+        <div style="background:#111;padding:4px 8px;display:flex;gap:4px;border-bottom:1px solid #222;overflow-x:auto;">
+          <span style="font-size:8px;background:#7c6af7;color:white;padding:2px 6px;border-radius:10px;white-space:nowrap;">TODO</span>
+          <span style="font-size:8px;color:#666;padding:2px 6px;border-radius:10px;white-space:nowrap;">IN PROGRESS</span>
+          <span style="font-size:8px;color:#666;padding:2px 6px;border-radius:10px;white-space:nowrap;">DONE</span>
+        </div>
+        <div style="padding:8px;min-height:110px;">
+          <div style="background:#2a2a3e;border-radius:4px;padding:5px;font-size:8px;margin-bottom:4px;">Task A</div>
+          <div style="background:#2a2a3e;border-radius:4px;padding:5px;font-size:8px;margin-bottom:4px;">Task B</div>
+          <div style="background:#2a2a3e;border-radius:4px;padding:5px;font-size:8px;color:#7c6af7;">+ Add card</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — One Column at a Time</h3>
+      <p>Column tabs at top, swipe or tap to switch. Full screen per column, clean and focused.</p>
+    </div>
+  </div>
+
+</div>

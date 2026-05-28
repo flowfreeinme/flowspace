@@ -1,0 +1,73 @@
+<h2>Tab Bar on Mobile</h2>
+<p class="subtitle">Desktop has multiple open tabs. What should happen on mobile?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:6px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #222;">
+          <span style="font-size:14px;">☰</span>
+          <span style="font-size:10px;flex:1;font-weight:600;color:#fff;">📄 My Board</span>
+          <span style="font-size:10px;color:#666;">👤</span>
+        </div>
+        <div style="padding:12px 10px;min-height:140px;">
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:80%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:60%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:90%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Hide Tabs</h3>
+      <p>No tab bar on mobile. Current page title shown in header. Navigate entirely via the drawer.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:0 6px;display:flex;align-items:center;gap:0;border-bottom:1px solid #222;overflow-x:auto;">
+          <span style="font-size:12px;padding:6px 4px;color:#666;">☰</span>
+          <span style="font-size:9px;padding:6px 7px;border-right:1px solid #222;background:#1a1a2e;color:#fff;white-space:nowrap;">📄 Board</span>
+          <span style="font-size:9px;padding:6px 7px;border-right:1px solid #222;color:#666;white-space:nowrap;">📄 Notes</span>
+          <span style="font-size:9px;padding:6px 7px;color:#666;white-space:nowrap;">+</span>
+        </div>
+        <div style="padding:12px 10px;min-height:140px;">
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:80%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:60%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:90%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Scrollable Tabs</h3>
+      <p>Keep the tab bar but make it horizontally scrollable. Works if you don't have many tabs open.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:160px;margin:0 auto;background:#1a1a2e;border-radius:24px;overflow:hidden;border:2px solid #333;font-size:11px;color:#ccc;">
+        <div style="background:#111;padding:6px 10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #222;">
+          <span style="font-size:14px;">☰</span>
+          <div style="flex:1;background:#222;border-radius:4px;padding:3px 7px;font-size:9px;color:#fff;display:flex;align-items:center;justify-content:space-between;">
+            <span>📄 My Board</span>
+            <span style="color:#666;">▾</span>
+          </div>
+          <span style="font-size:10px;color:#666;">👤</span>
+        </div>
+        <div style="padding:12px 10px;min-height:140px;">
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:80%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:60%;"></div>
+          <div style="height:6px;background:#333;border-radius:3px;margin-bottom:5px;width:90%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Tab Picker Dropdown</h3>
+      <p>Current tab shown as a pill in the header. Tap it to see and switch open tabs.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,36 @@
+<h2>HomeScreen + Widgets — Code Review</h2>
+<p class="subtitle">I found 4 distinct areas for improvement. Pick what matters most (select all that apply).</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="unimplemented" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Unimplemented config options</h3>
+      <p>Many settings are <em>defined in types and exposed in settings forms</em> but the widget renderers ignore them. Affects: Today (date format, weather summary, pages created today), Weather (UV index, sunrise/sunset, 3-day forecast), Focus Timer (break timer, completion sound, daily goal), Focus Queue (pinned items), Recent Work (folder exclusions), AI Planner (auto-refresh, calendar filter).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="architecture" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>HomeScreen.tsx is a 1,245-line monolith</h3>
+      <p>All 8 widget renderers, all state (weather, timer, calendar, day plan, resize drag…), and all helper logic live in a single file. Each widget should be its own component with its own state. This would make the file dramatically easier to work in and reduce bugs from state leaking between widgets.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="drag-move" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>No drag-to-reposition widgets</h3>
+      <p>Widgets can be resized from corners but cannot be dragged to a new grid position. Users have to remove and re-add a widget to change its location. Adding drag-to-move would make the home center feel much more like a real dashboard.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="new-widgets" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>New widget ideas</h3>
+      <p>The catalog currently has 8 widget types. Potential additions: Habits tracker, Daily notes / scratch pad, Pomodoro with break tracking, Agenda (list view of upcoming events), Goals / OKRs progress, or a Bookmark launcher.</p>
+    </div>
+  </div>
+</div>

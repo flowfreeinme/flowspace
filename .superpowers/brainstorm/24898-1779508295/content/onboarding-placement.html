@@ -1,0 +1,76 @@
+<h2>Where does onboarding appear?</h2>
+<p class="subtitle">New users need to pick their starter path — where does that choice happen?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Full-screen takeover</h3>
+      <p>After email confirmation, the user lands on a full-screen "Welcome to Flowspace" page before seeing the app at all. They pick their path, workspace populates, then they drop into the app. Clean, focused, no distractions.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="background:#0f0f13;padding:24px;border-radius:8px;text-align:center;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+          <div style="font-size:28px">👋</div>
+          <div style="color:#e2e8f0;font-weight:600;font-size:15px">Welcome to Flowspace</div>
+          <div style="color:#94a3b8;font-size:12px">Choose a starter to get going</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="background:#1e1e2e;border:1px solid #334155;border-radius:6px;padding:8px 12px;color:#a5b4fc;font-size:11px">🎓 Student</div>
+            <div style="background:#1e1e2e;border:1px solid #334155;border-radius:6px;padding:8px 12px;color:#a5b4fc;font-size:11px">✅ Personal</div>
+            <div style="background:#1e1e2e;border:1px solid #334155;border-radius:6px;padding:8px 12px;color:#a5b4fc;font-size:11px">🏗️ Team</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Modal on first load</h3>
+      <p>The app loads normally with the default workspace in the background, and a centered modal pops up asking the user to choose a path. They can dismiss it to skip. Less jarring, but the empty default workspace is visible behind it.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="background:#0f0f13;padding:12px;border-radius:8px;min-height:140px;position:relative;display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;display:flex;gap:4px;padding:4px;opacity:0.3">
+            <div style="background:#1e1e2e;width:80px;border-radius:4px"></div>
+            <div style="background:#1a1a2e;flex:1;border-radius:4px"></div>
+          </div>
+          <div style="position:relative;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;width:220px;text-align:center;z-index:1">
+            <div style="color:#e2e8f0;font-weight:600;font-size:13px;margin-bottom:8px">Get started faster</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="background:#0f172a;border:1px solid #334155;border-radius:5px;padding:6px;color:#a5b4fc;font-size:11px">🎓 Student workspace</div>
+              <div style="background:#0f172a;border:1px solid #334155;border-radius:5px;padding:6px;color:#a5b4fc;font-size:11px">✅ Personal productivity</div>
+              <div style="background:#0f172a;border:1px solid #334155;border-radius:5px;padding:6px;color:#a5b4fc;font-size:11px">🏗️ Team / project planning</div>
+            </div>
+            <div style="color:#64748b;font-size:10px;margin-top:8px">or skip →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Setup card on the home screen</h3>
+      <p>A dismissible "Get started" card appears as a widget on the home screen dashboard. The user can click it to pick a path anytime, or ignore it. Lowest friction — the app is immediately usable — but easy to miss or dismiss.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="background:#0f0f13;padding:8px;border-radius:8px;min-height:140px;display:flex;gap:6px">
+          <div style="background:#1e1e2e;width:70px;border-radius:6px"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <div style="background:#1e293b;border:1px solid #6366f1;border-radius:6px;padding:10px;flex:0 0 auto">
+              <div style="color:#a5b4fc;font-size:11px;font-weight:600;margin-bottom:6px">✨ Set up your workspace</div>
+              <div style="display:flex;gap:4px">
+                <div style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:4px 6px;color:#94a3b8;font-size:10px">🎓 Student</div>
+                <div style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:4px 6px;color:#94a3b8;font-size:10px">✅ Personal</div>
+                <div style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:4px 6px;color:#94a3b8;font-size:10px">🏗️ Team</div>
+              </div>
+            </div>
+            <div style="background:#1e1e2e;border-radius:6px;flex:1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

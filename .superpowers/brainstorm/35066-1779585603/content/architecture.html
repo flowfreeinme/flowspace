@@ -1,0 +1,105 @@
+<h2>Architecture Refactor Design</h2>
+<p class="subtitle">HomeScreen becomes a thin grid orchestrator. Each widget is a fully isolated component.</p>
+
+<div class="section">
+  <h3>New file structure</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem">
+
+    <div style="background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:1.25rem;font-family:monospace;font-size:12px;line-height:1.9">
+      <div style="color:#888;margin-bottom:0.5rem;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">BEFORE</div>
+      <div style="color:#f87171">HomeScreen.tsx <span style="color:#555;font-family:sans-serif;font-size:11px">1,245 lines</span></div>
+      <div style="color:#555;padding-left:1rem">renderCalendarWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderTodayWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderFocusWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderRecentWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderQuickCaptureWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderProPlannerWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderFocusTimerWidget()</div>
+      <div style="color:#555;padding-left:1rem">renderWeatherWidget()</div>
+      <div style="color:#555;padding-left:1rem">WidgetShell (inline)</div>
+      <div style="color:#555;padding-left:1rem">WidgetControls (inline)</div>
+      <div style="color:#555;padding-left:1rem">WidgetResizeHandles (inline)</div>
+      <div style="color:#555;padding-left:1rem;margin-top:0.25rem">~25 useState hooks</div>
+      <div style="color:#555;padding-left:1rem">~8 useEffect hooks</div>
+      <div style="color:#555;padding-left:1rem">weather fetch logic</div>
+      <div style="color:#555;padding-left:1rem">AI planner fetch logic</div>
+      <div style="color:#555;padding-left:1rem">calendar grid calc</div>
+      <div style="color:#555;padding-left:1rem">resize drag logic</div>
+    </div>
+
+    <div style="background:#0d1f0d;border:1px solid #1a3a1a;border-radius:12px;padding:1.25rem;font-family:monospace;font-size:12px;line-height:1.9">
+      <div style="color:#888;margin-bottom:0.5rem;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">AFTER</div>
+      <div style="color:#4ade80">HomeScreen.tsx <span style="color:#555;font-family:sans-serif;font-size:11px">~200 lines</span></div>
+      <div style="color:#555;padding-left:1rem">grid + edit mode</div>
+      <div style="color:#555;padding-left:1rem">resize drag logic</div>
+      <div style="color:#555;padding-left:1rem">widget catalog (add/remove)</div>
+      <br>
+      <div style="color:#60a5fa">widgets/WidgetShell.tsx</div>
+      <div style="color:#555;padding-left:1rem">positioning, controls, handles</div>
+      <br>
+      <div style="color:#c084fc">widgets/CalendarWidget.tsx</div>
+      <div style="color:#c084fc">widgets/TodayWidget.tsx</div>
+      <div style="color:#c084fc">widgets/FocusQueueWidget.tsx</div>
+      <div style="color:#c084fc">widgets/RecentWorkWidget.tsx</div>
+      <div style="color:#c084fc">widgets/QuickCaptureWidget.tsx</div>
+      <div style="color:#c084fc">widgets/ProPlannerWidget.tsx</div>
+      <div style="color:#c084fc">widgets/FocusTimerWidget.tsx</div>
+      <div style="color:#c084fc">widgets/WeatherWidget.tsx</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>What each widget owns</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-top:0.75rem">
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">WeatherWidget</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">weatherLocation state<br>weather fetch + error<br>geolocation detection<br>city search form<br>localStorage I/O</div>
+    </div>
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">ProPlannerWidget</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">dayPlan state<br>AI fetch + error<br>loading state<br>fallback plan logic</div>
+    </div>
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">CalendarWidget</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">viewYear / viewMonth<br>calendar menu<br>import modal<br>event edit modal<br>new event modal</div>
+    </div>
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">TodayWidget</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">own clock interval<br>reads calendar store<br>for next event</div>
+    </div>
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">FocusTimerWidget</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">reads focusTimer store<br>no local state needed<br>(store owns all timer state)</div>
+    </div>
+
+    <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem">
+      <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:0.5rem">FocusQueue / Recent / QuickCapture</div>
+      <div style="color:#666;font-size:11px;line-height:1.6">reads workspace store<br>no local state<br>simplest widgets</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>HomeScreen props passed to each widget</h3>
+  <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem;margin-top:0.75rem;font-family:monospace;font-size:12px;line-height:1.7">
+    <span style="color:#60a5fa">config</span><span style="color:#888">: WidgetConfigMap[type]   </span><span style="color:#555">// settings from getWidgetSettings()</span><br>
+    <span style="color:#888">That's it. Each widget reads its own stores directly.</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3>One special case: CalendarWidget navigation</h3>
+  <p style="color:#888;font-size:13px">Clicking a day in the calendar replaces the entire HomeScreen with DayView / WeekView (fullscreen). CalendarWidget calls two callbacks that HomeScreen handles:</p>
+  <div style="background:#111;border:1px solid #2a2a3a;border-radius:10px;padding:1rem;margin-top:0.75rem;font-family:monospace;font-size:12px;line-height:1.7">
+    <span style="color:#60a5fa">onSelectDay</span><span style="color:#888">(date: Date)   </span><span style="color:#555">// HomeScreen renders DayView</span><br>
+    <span style="color:#60a5fa">onSelectWeek</span><span style="color:#888">(date: Date)  </span><span style="color:#555">// HomeScreen renders WeekView</span>
+  </div>
+</div>

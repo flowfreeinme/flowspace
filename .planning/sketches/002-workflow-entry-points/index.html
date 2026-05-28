@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sketch 002 — Workflow Entry Points</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+
+  /* Variant nav */
+  #variant-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+    background: var(--surface-1); border-bottom: 1px solid var(--surface-3);
+    padding: 8px 16px; display: flex; gap: 8px; align-items: center;
+  }
+  .vtab {
+    padding: 5px 14px; border-radius: 8px; border: 1px solid var(--surface-3);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-size: 12px; font-family: var(--font); transition: all 0.15s;
+  }
+  .vtab:hover { color: var(--text); background: var(--surface-2); }
+  .vtab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .vtab.winner::after { content: ' ★'; }
+
+  .variant { display: none; height: 100vh; padding-top: 41px; }
+  .variant.active { display: block; }
+
+  /* Canvas sim */
+  .canvas-area {
+    width: 100%; height: 100%; background: var(--bg);
+    position: relative; overflow: hidden;
+    background-image: radial-gradient(var(--surface-3) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Sidebar sim */
+  .sidebar {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 180px;
+    background: var(--surface-1); border-right: 1px solid var(--surface-3);
+    padding: 12px 8px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .sidebar-item {
+    padding: 6px 8px; border-radius: var(--radius-sm); font-size: 12px;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sidebar-item:hover { background: var(--surface-2); color: var(--text); }
+  .sidebar-item.active { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+  /* Canvas content area */
+  .canvas-body {
+    position: absolute; left: 180px; top: 0; right: 0; bottom: 0; overflow: hidden;
+  }
+
+  /* Board cards on canvas */
+  .board-card {
+    position: absolute; background: var(--surface-2); border: 1px solid var(--surface-3);
+    border-radius: var(--radius-md); padding: 12px; font-size: 12px; color: var(--text-muted);
+    min-width: 140px; box-shadow: var(--shadow-card); user-select: none;
+  }
+  .board-card .card-text { color: var(--text); font-size: 13px; margin-bottom: 4px; }
+
+  /* ─── VARIANT A: Toolbox submenu ─── */
+  .toolbox {
+    position: absolute; right: 20px; bottom: 20px;
+    background: var(--surface-2); border: 1px solid var(--surface-4);
+    border-radius: 16px; padding: 6px; display: flex; flex-direction: column;
+    gap: 2px; box-shadow: var(--shadow-panel); z-index: 100;
+  }
+  .toolbox-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 12px; border-radius: 12px; border: none; background: transparent;
+    color: var(--text-muted); cursor: pointer; font-size: 10px; font-family: var(--font);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .toolbox-btn:hover { background: var(--surface-3); color: var(--text); }
+  .toolbox-btn.active { background: rgba(124,106,247,0.15); color: var(--accent); }
+  .toolbox-btn svg { width: 15px; height: 15px; }
+  .toolbox-divider { height: 1px; background: var(--surface-3); margin: 2px 6px; }
+
+  /* Workflow submenu (variant A) */
+  .workflow-submenu {
+    position: absolute; right: 100%; bottom: 0; margin-right: 8px;
+    background: var(--surface-2); border: 1px solid var(--surface-4);
+    border-radius: var(--radius-md); padding: 6px; box-shadow: var(--shadow-panel);
+    display: none; flex-direction: column; gap: 4px; min-width: 160px;
+  }
+  .workflow-submenu.open { display: flex; }
+  .wf-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;
+    color: var(--text-muted); border: none; background: transparent;
+    font-family: var(--font); text-align: left; transition: all 0.15s;
+  }
+  .wf-item:hover { background: var(--surface-3); color: var(--text); }
+  .wf-item .wf-icon { font-size: 16px; }
+  .wf-item-info { display: flex; flex-direction: column; gap: 1px; }
+  .wf-item-label { font-size: 12px; color: var(--text); font-weight: 500; }
+  .wf-item-desc { font-size: 10px; color: var(--text-dim); }
+
+  /* Right-click context menu */
+  .ctx-menu {
+    position: absolute; background: var(--surface-2); border: 1px solid var(--surface-4);
+    border-radius: var(--radius-md); padding: 4px; box-shadow: var(--shadow-panel);
+    min-width: 180px; display: none; z-index: 200;
+  }
+  .ctx-menu.open { display: block; }
+  .ctx-item {
+    padding: 7px 12px; border-radius: var(--radius-sm); font-size: 12px;
+    color: var(--text-muted); cursor: pointer; display: flex; align-items: center;
+    gap: 8px; transition: all 0.15s; border: none; background: transparent;
+    font-family: var(--font); width: 100%; text-align: left;
+  }
+  .ctx-item:hover { background: var(--surface-3); color: var(--text); }
+  .ctx-separator { height: 1px; background: var(--surface-3); margin: 4px 0; }
+  .ctx-section-label {
+    padding: 4px 12px; font-size: 10px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+  }
+
+  /* Flyout submenu (variant C) */
+  .ctx-flyout {
+    position: absolute; left: 100%; top: 0; margin-left: 4px;
+    background: var(--surface-2); border: 1px solid var(--surface-4);
+    border-radius: var(--radius-md); padding: 4px; box-shadow: var(--shadow-panel);
+    min-width: 160px; display: none;
+  }
+  .ctx-item:hover .ctx-flyout { display: block; }
+  .ctx-flyout-item {
+    padding: 7px 12px; border-radius: var(--radius-sm); font-size: 12px;
+    color: var(--text-muted); cursor: pointer; display: flex; align-items: center;
+    gap: 8px; transition: all 0.15s;
+  }
+  .ctx-flyout-item:hover { background: var(--surface-3); color: var(--text); }
+
+  /* Zoom bar */
+  .zoom-bar {
+    border-top: 1px solid var(--surface-3); padding: 4px 6px;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .zoom-btn {
+    padding: 4px 6px; border-radius: 8px; border: none; background: transparent;
+    color: var(--text-muted); cursor: pointer; font-size: 11px; font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .zoom-btn:hover { background: var(--surface-3); color: var(--text); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--accent);
+    border-radius: var(--radius-md); padding: 10px 18px; font-size: 13px;
+    color: var(--text); box-shadow: var(--shadow-panel); z-index: 9000;
+    display: none; white-space: nowrap;
+  }
+  .toast.show { display: block; animation: fadeInUp 0.2s ease; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* Label badge */
+  .sketch-label {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(124,106,247,0.12); border: 1px solid rgba(124,106,247,0.25);
+    color: var(--accent); font-size: 11px; padding: 4px 12px; border-radius: 99px;
+    pointer-events: none; z-index: 50;
+  }
+
+  /* Variant B: 3 separate toolbox buttons */
+  .toolbox-b .toolbox-btn.workflow-b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Variant nav -->
+<div id="variant-nav">
+  <button class="vtab active" onclick="showVariant('a', this)">A: Toolbox submenu</button>
+  <button class="vtab" onclick="showVariant('b', this)">B: Separate toolbox buttons</button>
+  <button class="vtab" onclick="showVariant('c', this)">C: Right-click flyout</button>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     VARIANT A — "Workflow" toolbox button → submenu
+     ════════════════════════════════════════════════ -->
+<div id="variant-a" class="variant active">
+  <div class="canvas-area" onclick="closeAll('a')">
+    <div class="sketch-label">Right-click canvas or use toolbox ↘</div>
+    <div class="sidebar">
+      <div class="sidebar-item active">🚀 Project Plan</div>
+      <div class="sidebar-item">✅ My Tasks</div>
+      <div class="sidebar-item">📓 Notes</div>
+    </div>
+    <div class="canvas-body">
+      <!-- some sample cards -->
+      <div class="board-card" style="left:60px;top:80px;">
+        <div class="card-text">Design system audit</div>
+        <span style="font-size:10px;background:rgba(124,106,247,0.15);color:var(--accent);padding:2px 7px;border-radius:4px;">design</span>
+      </div>
+      <div class="board-card" style="left:240px;top:140px;">
+        <div class="card-text">User interviews</div>
+      </div>
+      <div class="board-card" style="left:120px;top:240px;opacity:0.5;">
+        <div class="card-text">Ship v1</div>
+      </div>
+
+      <!-- Right-click menu (shown by default for demo) -->
+      <div id="ctxA" class="ctx-menu open" style="left:340px;top:100px;">
+        <button class="ctx-item" onclick="addBlock('a','section')">
+          <span>▤</span> Add section
+        </button>
+        <div class="ctx-separator"></div>
+        <div class="ctx-section-label">Workflow</div>
+        <button class="ctx-item" onclick="addBlock('a','kanban')">📋 Kanban board</button>
+        <button class="ctx-item" onclick="addBlock('a','flowchart')">⬡ Flowchart</button>
+        <button class="ctx-item" onclick="addBlock('a','timeline')">📅 Timeline</button>
+        <div class="ctx-separator"></div>
+        <button class="ctx-item" onclick="closeAll('a')">
+          <span style="color:var(--accent)">✦</span> Ask AI
+        </button>
+      </div>
+
+      <!-- Toolbox -->
+      <div class="toolbox" style="position:absolute;right:20px;bottom:20px;">
+        <div style="position:relative;">
+          <div id="submenuA" class="workflow-submenu open" style="right:calc(100% + 8px);bottom:0;">
+            <div style="padding:4px 10px 6px;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600;">Add workflow block</div>
+            <button class="wf-item" onclick="addBlock('a','kanban');closeAll('a')">
+              <span class="wf-icon">📋</span>
+              <div class="wf-item-info">
+                <div class="wf-item-label">Kanban</div>
+                <div class="wf-item-desc">Columns & draggable cards</div>
+              </div>
+            </button>
+            <button class="wf-item" onclick="addBlock('a','flowchart');closeAll('a')">
+              <span class="wf-icon">⬡</span>
+              <div class="wf-item-info">
+                <div class="wf-item-label">Flowchart</div>
+                <div class="wf-item-desc">Nodes & arrows</div>
+              </div>
+            </button>
+            <button class="wf-item" onclick="addBlock('a','timeline');closeAll('a')">
+              <span class="wf-icon">📅</span>
+              <div class="wf-item-info">
+                <div class="wf-item-label">Timeline</div>
+                <div class="wf-item-desc">Tasks on a time axis</div>
+              </div>
+            </button>
+          </div>
+          <button class="toolbox-btn active" id="wfBtnA" onclick="toggleSubmenu('submenuA','wfBtnA',event)">
+            <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="5" height="4" rx="1"/><rect x="9" y="4" width="5" height="4" rx="1"/><line x1="6" y1="6" x2="9" y2="6"/></svg>
+            Workflow
+          </button>
+        </div>
+        <button class="toolbox-btn" onclick="showToast('Lasso tool active')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2C4.5 2 2 4.5 2 7.5s2.5 5.5 5.5 5.5 5.5-2.5 5.5-5.5S10.5 2 7.5 2z" stroke-dasharray="2 2"/></svg>
+          Lasso
+        </button>
+        <button class="toolbox-btn" onclick="showToast('Draw mode active')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13L5 10 12 3l2 2L7 12z"/></svg>
+          Draw
+        </button>
+        <button class="toolbox-btn" onclick="showToast('Text box added')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="11" height="7" rx="1"/><line x1="5" y1="7.5" x2="10" y2="7.5"/></svg>
+          Text box
+        </button>
+        <div class="toolbox-divider"></div>
+        <div class="zoom-bar">
+          <button class="zoom-btn">−</button>
+          <span style="font-size:10px;color:var(--text-muted);min-width:32px;text-align:center;">100%</span>
+          <button class="zoom-btn">+</button>
+          <button class="zoom-btn">⤢</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     VARIANT B — 3 separate buttons in toolbox + ctx section
+     ════════════════════════════════════════════════ -->
+<div id="variant-b" class="variant">
+  <div class="canvas-area" onclick="closeAll('b')">
+    <div class="sketch-label">Three workflow buttons in the toolbox ↘</div>
+    <div class="sidebar">
+      <div class="sidebar-item active">🚀 Project Plan</div>
+      <div class="sidebar-item">✅ My Tasks</div>
+      <div class="sidebar-item">📓 Notes</div>
+    </div>
+    <div class="canvas-body">
+      <div class="board-card" style="left:60px;top:80px;">
+        <div class="card-text">Design system audit</div>
+        <span style="font-size:10px;background:rgba(124,106,247,0.15);color:var(--accent);padding:2px 7px;border-radius:4px;">design</span>
+      </div>
+      <div class="board-card" style="left:240px;top:140px;"><div class="card-text">User interviews</div></div>
+
+      <!-- Toolbox variant B: separate buttons -->
+      <div class="toolbox" style="position:absolute;right:20px;bottom:20px;">
+        <button class="toolbox-btn" onclick="showToast('Lasso tool active')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2C4.5 2 2 4.5 2 7.5s2.5 5.5 5.5 5.5 5.5-2.5 5.5-5.5S10.5 2 7.5 2z" stroke-dasharray="2 2"/></svg>
+          Lasso
+        </button>
+        <button class="toolbox-btn" onclick="showToast('Draw mode active')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13L5 10 12 3l2 2L7 12z"/></svg>
+          Draw
+        </button>
+        <button class="toolbox-btn" onclick="showToast('Text box added')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="11" height="7" rx="1"/></svg>
+          Text box
+        </button>
+        <div class="toolbox-divider"></div>
+        <div style="padding:4px 10px 2px;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600;text-align:center;">Workflow</div>
+        <button class="toolbox-btn" style="color:var(--accent);" onclick="addBlock('b','kanban')">
+          <span style="font-size:15px;">📋</span>
+          Kanban
+        </button>
+        <button class="toolbox-btn" style="color:var(--accent);" onclick="addBlock('b','flowchart')">
+          <span style="font-size:15px;">⬡</span>
+          Flowchart
+        </button>
+        <button class="toolbox-btn" style="color:var(--accent);" onclick="addBlock('b','timeline')">
+          <span style="font-size:15px;">📅</span>
+          Timeline
+        </button>
+        <div class="toolbox-divider"></div>
+        <div class="zoom-bar">
+          <button class="zoom-btn">−</button>
+          <span style="font-size:10px;color:var(--text-muted);min-width:32px;text-align:center;">100%</span>
+          <button class="zoom-btn">+</button>
+          <button class="zoom-btn">⤢</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     VARIANT C — Right-click flyout "Workflow ▶"
+     ════════════════════════════════════════════════ -->
+<div id="variant-c" class="variant">
+  <div class="canvas-area" onclick="closeAll('c')" oncontextmenu="openCtxC(event)">
+    <div class="sketch-label">Right-click anywhere on canvas to see the menu</div>
+    <div class="sidebar">
+      <div class="sidebar-item active">🚀 Project Plan</div>
+      <div class="sidebar-item">✅ My Tasks</div>
+      <div class="sidebar-item">📓 Notes</div>
+    </div>
+    <div class="canvas-body" oncontextmenu="openCtxC(event)">
+      <div class="board-card" style="left:60px;top:80px;"><div class="card-text">Design system audit</div></div>
+      <div class="board-card" style="left:260px;top:150px;"><div class="card-text">User interviews</div></div>
+
+      <!-- Context menu shown by default for demo -->
+      <div id="ctxC" class="ctx-menu open" style="left:160px;top:120px;" onmouseleave="hideSubC()">
+        <button class="ctx-item" onclick="addBlock('c','section')">
+          <span>▤</span> Add section
+        </button>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" style="justify-content:space-between;position:relative;" onmouseenter="showSubC()">
+          <span style="display:flex;align-items:center;gap:8px;"><span>⬡</span> Workflow</span>
+          <span style="font-size:10px;color:var(--text-dim);">▶</span>
+          <!-- flyout -->
+          <div id="flyoutC" style="position:absolute;left:calc(100% + 4px);top:0;background:var(--surface-2);border:1px solid var(--surface-4);border-radius:var(--radius-md);padding:4px;box-shadow:var(--shadow-panel);min-width:170px;display:none;z-index:300;">
+            <button class="ctx-item" onclick="addBlock('c','kanban');closeAll('c')">
+              <span>📋</span>
+              <div>
+                <div style="font-size:12px;color:var(--text);">Kanban board</div>
+                <div style="font-size:10px;color:var(--text-dim);">Columns & cards</div>
+              </div>
+            </button>
+            <button class="ctx-item" onclick="addBlock('c','flowchart');closeAll('c')">
+              <span>⬡</span>
+              <div>
+                <div style="font-size:12px;color:var(--text);">Flowchart</div>
+                <div style="font-size:10px;color:var(--text-dim);">Nodes & arrows</div>
+              </div>
+            </button>
+            <button class="ctx-item" onclick="addBlock('c','timeline');closeAll('c')">
+              <span>📅</span>
+              <div>
+                <div style="font-size:12px;color:var(--text);">Timeline</div>
+                <div style="font-size:10px;color:var(--text-dim);">Tasks on time axis</div>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div class="ctx-separator"></div>
+        <button class="ctx-item" onclick="closeAll('c')"><span style="color:var(--accent)">✦</span> Ask AI</button>
+      </div>
+
+      <!-- Toolbox (minimal, no workflow buttons) -->
+      <div class="toolbox" style="position:absolute;right:20px;bottom:20px;">
+        <button class="toolbox-btn" onclick="showToast('Lasso tool active')">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2C4.5 2 2 4.5 2 7.5s2.5 5.5 5.5 5.5 5.5-2.5 5.5-5.5S10.5 2 7.5 2z" stroke-dasharray="2 2"/></svg>
+          Lasso
+        </button>
+        <button class="toolbox-btn">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13L5 10 12 3l2 2L7 12z"/></svg>
+          Draw
+        </button>
+        <button class="toolbox-btn">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="11" height="7" rx="1"/></svg>
+          Text box
+        </button>
+        <div class="toolbox-divider"></div>
+        <div class="zoom-bar">
+          <button class="zoom-btn">−</button>
+          <span style="font-size:10px;color:var(--text-muted);min-width:32px;text-align:center;">100%</span>
+          <button class="zoom-btn">+</button>
+          <button class="zoom-btn">⤢</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Sketch toolbar -->
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.75);color:white;padding:8px 12px;border-radius:8px;opacity:0.4;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'" style="background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 6px;font-size:11px;">
+    <option value="default">Default theme</option>
+  </select>
+</div>
+
+<script>
+function showVariant(id, btn) {
+  document.querySelectorAll('.variant').forEach(v => v.style.display = 'none');
+  document.querySelectorAll('.vtab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).style.display = 'block';
+  btn.classList.add('active');
+}
+
+function closeAll(v) {
+  if (v === 'a') {
+    document.getElementById('ctxA') && (document.getElementById('ctxA').classList.remove('open'));
+    document.getElementById('submenuA') && (document.getElementById('submenuA').classList.remove('open'));
+    document.getElementById('wfBtnA') && document.getElementById('wfBtnA').classList.remove('active');
+  }
+  if (v === 'c') {
+    document.getElementById('ctxC') && (document.getElementById('ctxC').classList.remove('open'));
+    hideSubC();
+  }
+}
+
+function toggleSubmenu(id, btnId, e) {
+  e.stopPropagation();
+  const sub = document.getElementById(id);
+  const btn = document.getElementById(btnId);
+  const isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  btn.classList.toggle('active', !isOpen);
+}
+
+function showSubC() { document.getElementById('flyoutC').style.display = 'block'; }
+function hideSubC() { document.getElementById('flyoutC').style.display = 'none'; }
+
+function openCtxC(e) {
+  e.preventDefault(); e.stopPropagation();
+  const menu = document.getElementById('ctxC');
+  const canvas = document.querySelector('#variant-c .canvas-body').getBoundingClientRect();
+  menu.style.left = (e.clientX - canvas.left - 180) + 'px';
+  menu.style.top  = (e.clientY - canvas.top - 41) + 'px';
+  menu.classList.add('open');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✦ ' + msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function addBlock(variant, type) {
+  const msgs = { kanban: '📋 Kanban block added to board', flowchart: '⬡ Flowchart block added to board', timeline: '📅 Timeline block added to board', section: 'Section added' };
+  showToast(msgs[type] || 'Block added');
+}
+</script>
+</body>
+</html>
