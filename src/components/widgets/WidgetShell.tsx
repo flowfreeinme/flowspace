@@ -8,10 +8,12 @@ interface WidgetShellProps {
   widget: HomeWidget
   editingHome: boolean
   isResizing: boolean
+  isDragging: boolean
   openSettings: boolean
   onOpenSettings: () => void
   onCloseSettings: () => void
   onStartResize: (e: React.PointerEvent<HTMLButtonElement>, corner: HomeWidgetResizeCorner) => void
+  onStartDrag: (e: React.PointerEvent<HTMLElement>) => void
   onRemove: () => void
   settingsForm: React.ReactNode
   children: React.ReactNode
@@ -46,10 +48,12 @@ export default function WidgetShell({
   widget,
   editingHome,
   isResizing,
+  isDragging,
   openSettings,
   onOpenSettings,
   onCloseSettings,
   onStartResize,
+  onStartDrag,
   onRemove,
   settingsForm,
   children,
@@ -63,12 +67,21 @@ export default function WidgetShell({
     event.stopPropagation()
   }
 
+  function handlePointerDown(event: React.PointerEvent<HTMLElement>) {
+    if (!editingHome || isMobile) return
+    if (event.target instanceof HTMLElement && event.target.closest('[data-home-widget-edit-control]')) return
+    onStartDrag(event)
+  }
+
   return (
     <section
       onClickCapture={handleClickCapture}
+      onPointerDown={handlePointerDown}
       className={`relative min-h-0 overflow-hidden rounded-2xl border bg-surface-1 shadow-sm transition-colors ${
         editingHome ? 'select-none border-accent/45 ring-1 ring-accent/20' : 'border-surface-3'
-      } ${isResizing ? 'z-20 border-accent ring-2 ring-accent/30' : ''}`}
+      } ${isResizing ? 'z-20 border-accent ring-2 ring-accent/30' : ''} ${
+        isDragging ? 'z-20 opacity-75 cursor-grabbing' : editingHome && !isResizing ? 'cursor-grab' : ''
+      }`}
       style={widgetGridStyle(widget, isMobile)}
     >
       <div

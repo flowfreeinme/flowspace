@@ -192,6 +192,28 @@ export function resizeHomeWidget(widgets: HomeWidget[], id: string, dw: number, 
   )))
 }
 
+export function pushCascadeHomeWidgets(widgets: HomeWidget[], movedId: string): HomeWidget[] {
+  let result = widgets.map(w => ({ ...w }))
+  let changed = true
+
+  while (changed) {
+    changed = false
+    for (const widget of result) {
+      if (widget.id === movedId) continue
+      const blockers = result.filter(w => w.id !== widget.id && overlaps(w, widget))
+      if (!blockers.length) continue
+      const requiredY = Math.max(...blockers.map(w => w.y + w.h))
+      if (widget.y < requiredY) {
+        const clamped = clamp(requiredY, 0, HOME_GRID_ROWS - widget.h)
+        result = result.map(w => w.id === widget.id ? { ...w, y: clamped } : w)
+        changed = true
+      }
+    }
+  }
+
+  return normalizeHomeWidgets(result)
+}
+
 export function resizeHomeWidgetFromCorner(
   widgets: HomeWidget[],
   id: string,

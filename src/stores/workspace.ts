@@ -19,6 +19,7 @@ import {
   removeHomeWidget,
   resizeHomeWidget,
   resizeHomeWidgetFromCorner,
+  pushCascadeHomeWidgets,
   type HomeWidgetResizeCorner,
 } from '@/lib/homeCenter'
 
@@ -67,6 +68,7 @@ interface WorkspaceStore extends WorkspaceData {
   resizeHomeCenterWidgetFromCorner: (id: string, corner: HomeWidgetResizeCorner, dx: number, dy: number) => void
   autoArrangeHomeCenter: () => void
   resetHomeCenter: () => void
+  pushCascadeHomeCenterWidgets: (id: string) => void
   updateWidgetSettings: <K extends HomeWidgetType>(type: K, patch: Partial<WidgetConfigMap[K]>) => void
   openTemplatePicker: (parentId?: string | null) => void
   closeTemplatePicker: () => void
@@ -571,6 +573,16 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
 
   resetHomeCenter() {
     set({ homeCenter: { widgets: DEFAULT_HOME_WIDGETS } })
+    get().persist()
+  },
+
+  pushCascadeHomeCenterWidgets(id) {
+    set(s => ({
+      homeCenter: {
+        ...s.homeCenter,
+        widgets: pushCascadeHomeWidgets(s.homeCenter?.widgets ?? DEFAULT_HOME_WIDGETS, id),
+      },
+    }))
     get().persist()
   },
 
