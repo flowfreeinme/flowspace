@@ -38,6 +38,7 @@ interface WorkspaceStore extends WorkspaceData {
   // Pages
   createPage: (parentId?: string | null) => string
   createBoard: (parentId?: string | null) => string
+  createDatabase: (parentId?: string | null) => string
   createFolder: (parentId?: string | null) => string
   updatePageTitle: (id: string, title: string) => void
   updatePageIcon: (id: string, icon: string) => void
@@ -237,6 +238,35 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
       }
       return { pages, rootPages }
     })
+    get().persist()
+    return id
+  },
+
+  createDatabase(parentId = null) {
+    const { pages, rootPages } = get()
+    const id = uuid()
+    const now = Date.now()
+    const page: Page = {
+      id,
+      title: 'Untitled Database',
+      icon: '⊞',
+      blocks: [],
+      children: [],
+      parentId: parentId ?? null,
+      createdAt: now,
+      updatedAt: now,
+      boardMode: false,
+      database: true,
+    }
+    const newPages = { ...pages, [id]: page }
+    const newRoot = parentId ? rootPages : [...rootPages, id]
+    if (parentId && newPages[parentId]) {
+      newPages[parentId] = {
+        ...newPages[parentId],
+        children: [...newPages[parentId].children, id],
+      }
+    }
+    set({ pages: newPages, rootPages: newRoot })
     get().persist()
     return id
   },
