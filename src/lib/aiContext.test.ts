@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildWorkflowContext, formatCalendarEventsForAi, resolveCalendarRangeForPrompt } from './aiContext'
+import { buildTodoContext, buildWorkflowContext, formatCalendarEventsForAi, resolveCalendarRangeForPrompt } from './aiContext'
 import type { CalendarEvent } from '@/types/calendar'
 import type { Page } from '@/types'
 
@@ -65,6 +65,42 @@ describe('formatCalendarEventsForAi', () => {
     })
 
     expect(result.map(event => event.title)).toEqual(['Earlier in range', 'Later in range'])
+  })
+})
+
+describe('buildTodoContext', () => {
+  it('summarizes board todo list widgets with unchecked tasks first', () => {
+    const page: Page = {
+      id: 'board',
+      title: 'Launch board',
+      icon: '✅',
+      children: [],
+      parentId: null,
+      createdAt: 0,
+      updatedAt: 0,
+      boardMode: true,
+      blocks: [{
+        id: 'todo-widget',
+        type: 'boardWidget',
+        content: JSON.stringify({
+          type: 'todoList',
+          x: 0,
+          y: 0,
+          width: 360,
+          height: 300,
+          items: [
+            { id: 'done', text: 'Pick color palette', done: true },
+            { id: 'open', text: 'Publish landing copy', done: false },
+          ],
+        }),
+      }],
+    }
+
+    expect(buildTodoContext([page])).toEqual([{
+      pageTitle: 'Launch board',
+      open: ['Publish landing copy'],
+      done: ['Pick color palette'],
+    }])
   })
 })
 

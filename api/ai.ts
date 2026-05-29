@@ -58,6 +58,17 @@ function buildSystemPrompt(ctx: any): string {
         .join('\n')}`
     )
   }
+  if (ctx?.todos?.length) {
+    parts.push(
+      `\nBoard to-do widgets:\n${ctx.todos
+        .map((todo: any) => {
+          const open = (todo.open || []).map((item: string) => `  - [ ] ${item}`).join('\n')
+          const done = (todo.done || []).map((item: string) => `  - [x] ${item}`).join('\n')
+          return `- ${todo.pageTitle || 'Untitled'}:\n${[open, done].filter(Boolean).join('\n')}`
+        })
+        .join('\n')}`
+    )
+  }
 
   parts.push(`
 You MUST respond with valid JSON only — no text before or after:
@@ -81,6 +92,10 @@ Rules:
 - Always include "message".
 - For board reformats: clear_board first, then sections, then cards.
 - Keep card text under 15 words.
+- Ground answers in the provided workspace context before inventing new tasks.
+- Prioritize unchecked board to-do widget tasks over completed tasks or brand-new suggestions.
+- When useful, mention the exact board/page that contains a task.
+- If the request is ambiguous but enough context exists, make a practical assumption and proceed.
 - When planning days or schedules, use calendar event times/locations, timeline dated items, kanban status, and flowchart order together.
 - Use create_workflow when the user asks for a timeline, kanban, flowchart, schedule, task pipeline, or step-by-step day map.
 - Use 24-hour HH:mm times and YYYY-MM-DD dates in create_workflow timeline items.

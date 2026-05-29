@@ -166,6 +166,11 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         ...workflow,
         items: workflow.items.slice(0, 8).map(item => item.slice(0, 180)),
       })),
+      todos: workspaceContext.todos?.slice(0, 12).map(todo => ({
+        pageTitle: todo.pageTitle.slice(0, 80),
+        open: todo.open.slice(0, 12).map(item => item.slice(0, 160)),
+        done: todo.done.slice(0, 8).map(item => item.slice(0, 160)),
+      })),
     }
 
     try {

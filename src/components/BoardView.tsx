@@ -24,7 +24,7 @@ import {
   parseKanban, parseFlowchart, parseTimeline,
   defaultKanban, defaultFlowchart, defaultTimeline,
 } from '@/lib/workflowBlocks'
-import { buildWorkflowContext, formatCalendarEventsForAi } from '@/lib/aiContext'
+import { buildTodoContext, buildWorkflowContext, formatCalendarEventsForAi } from '@/lib/aiContext'
 import {
   BOARD_WIDGET_MIN_HEIGHT,
   BOARD_WIDGET_MIN_WIDTH,
@@ -363,6 +363,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
       })),
     calendar: formatCalendarEventsForAi(calendarEvents, now),
     workflows: buildWorkflowContext(activeContextPages).slice(0, 12),
+    todos: buildTodoContext(activeContextPages).slice(0, 12),
   }
 
   // ── auto-create first card ──

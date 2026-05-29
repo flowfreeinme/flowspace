@@ -1,7 +1,7 @@
 import type { WorkspaceContext } from '@/lib/aiTypes'
 import type { CalendarEvent } from '@/types/calendar'
 import type { Page } from '@/types'
-import { buildWorkflowContext, formatCalendarEventsForAi } from './aiContext'
+import { buildTodoContext, buildWorkflowContext, formatCalendarEventsForAi } from './aiContext'
 
 interface PlannerInput {
   now: Date
@@ -26,7 +26,7 @@ function formatShortTime(date: Date) {
 export function buildDayPlannerPrompt(now: Date) {
   return [
     `Create a practical plan for today (${now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}).`,
-    'Use calendar times and locations, timeline date blocks, kanban task status, and flowchart order from the workspace context.',
+    'Use calendar times and locations, unchecked to-do widget tasks, timeline date blocks, kanban task status, and flowchart order from the workspace context.',
     'Return a concise plan with: 1) top priority, 2) time blocks, 3) next three actions, 4) one thing to avoid.',
     'Keep it specific and under 140 words.',
   ].join('\n')
@@ -55,6 +55,7 @@ export function buildDayPlannerWorkspaceContext({ now, pages, events }: PlannerI
     },
     allBoards: activePages.map(page => ({ title: page.title || 'Untitled', sections: [] })),
     workflows: buildWorkflowContext(activePages),
+    todos: buildTodoContext(activePages),
     calendar: formatCalendarEventsForAi(upcomingEvents, now),
   }
 }

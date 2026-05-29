@@ -22,12 +22,19 @@ export interface WorkspaceContext {
   }[]
   calendarRange?: { label: string; start: string; end: string }
   workflows?: WorkflowContext[]
+  todos?: TodoContext[]
 }
 
 export interface WorkflowContext {
   type: 'kanban' | 'timeline' | 'flowchart'
   pageTitle: string
   items: string[]
+}
+
+export interface TodoContext {
+  pageTitle: string
+  open: string[]
+  done: string[]
 }
 
 export interface AiAction {
