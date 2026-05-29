@@ -11,6 +11,7 @@ import type { WorkspaceContext } from '@/lib/aiTypes'
 import ImageCropModal from './ImageCropModal'
 import ResizableBlock from './ResizableBlock'
 import AiTextToolbar from './AiTextToolbar'
+import DatabaseBlock from './database/DatabaseBlock'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25 MB
 
@@ -49,6 +50,7 @@ const SLASH_COMMANDS: { label: string; type: BlockType; icon: string }[] = [
   { label: 'Divider', type: 'divider', icon: '—' },
   { label: 'File attachment', type: 'file', icon: '📎' },
   { label: 'Text box', type: 'textbox', icon: '▭' },
+  { label: 'Database', type: 'database', icon: '⊞' },
 ]
 
 interface FileData {
@@ -77,7 +79,7 @@ interface BlockRowProps {
 }
 
 function BlockRow({ block, pageId, index, focusNext, focusPrev, registerRef }: BlockRowProps) {
-  const { updateBlock, addBlock, deleteBlock, changeBlockType } = useWorkspace()
+  const { updateBlock, addBlock, deleteBlock, changeBlockType, createDatabase } = useWorkspace()
   const { user } = useAuth()
   const ref = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -120,6 +122,13 @@ function BlockRow({ block, pageId, index, focusNext, focusPrev, registerRef }: B
       if (ref.current) ref.current.textContent = ''
       setShowMenu(false)
       setTimeout(() => fileInputRef.current?.click(), 50)
+      return
+    }
+    if (type === 'database') {
+      const dbPageId = createDatabase(null)
+      changeBlockType(pageId, block.id, 'database')
+      updateBlock(pageId, block.id, { content: dbPageId })
+      setShowMenu(false)
       return
     }
     if (ref.current) ref.current.textContent = ''
@@ -184,6 +193,10 @@ function BlockRow({ block, pageId, index, focusNext, focusPrev, registerRef }: B
 
     if (e.key === 'ArrowDown') { e.preventDefault(); focusNext(block.id) }
     if (e.key === 'ArrowUp') { e.preventDefault(); focusPrev(block.id) }
+  }
+
+  if (block.type === 'database') {
+    return <DatabaseBlock block={block} pageId={pageId} />
   }
 
   if (block.type === 'textbox') {
