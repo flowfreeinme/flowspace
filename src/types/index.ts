@@ -19,6 +19,7 @@ export type BlockType =
   | 'flowchart'
   | 'timeline'
   | 'boardWidget'
+  | 'database'
 
 export interface Block {
   id: string
@@ -38,6 +39,7 @@ export interface Page {
   createdAt: number
   updatedAt: number
   boardMode?: boolean
+  database?: boolean
   folder?: boolean
   favorite?: boolean
   archived?: boolean

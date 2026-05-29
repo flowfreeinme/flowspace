@@ -5,7 +5,7 @@ import { useCalendar } from '@/stores/calendar'
 import { useAuth } from '@/stores/auth'
 import { useNotifications } from '@/stores/notifications'
 import { uploadToR2 } from '@/lib/r2'
-import { buildWorkflowContext, formatCalendarEventsForAi } from '@/lib/aiContext'
+import { buildTodoContext, buildWorkflowContext, formatCalendarEventsForAi } from '@/lib/aiContext'
 import type { Block, BlockType } from '@/types'
 import type { WorkspaceContext } from '@/lib/aiTypes'
 import ImageCropModal from './ImageCropModal'
@@ -33,6 +33,7 @@ const BLOCK_PLACEHOLDER: Record<BlockType, string> = {
   flowchart: '',
   timeline: '',
   boardWidget: '',
+  database: '',
 }
 
 const SLASH_COMMANDS: { label: string; type: BlockType; icon: string }[] = [
@@ -497,6 +498,7 @@ export default function BlockEditor({ pageId, onRequestFileUpload }: BlockEditor
       })),
     calendar: formatCalendarEventsForAi(calendarEvents, now),
     workflows: buildWorkflowContext(activeContextPages).slice(0, 12),
+    todos: buildTodoContext(activeContextPages).slice(0, 12),
   }
 
   function handleReplaceSelection(newText: string) {
