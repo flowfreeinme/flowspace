@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEditableDrawing, parseBoardImage } from './boardImages'
+import { getBoardImageObjectFit, isEditableDrawing, parseBoardImage } from './boardImages'
 
 describe('board image helpers', () => {
   it('preserves drawing metadata when parsing board images', () => {
@@ -29,5 +29,10 @@ describe('board image helpers', () => {
   it('does not offer drawing edit controls for regular uploaded images', () => {
     expect(isEditableDrawing({ url: 'https://cdn.example.com/pages/123/profile-photo.png' })).toBe(false)
     expect(isEditableDrawing({ url: '' })).toBe(false)
+  })
+
+  it('fills the image box for drawings while containing regular images', () => {
+    expect(getBoardImageObjectFit({ url: 'https://cdn.example.com/pages/123/abc-drawing.png' })).toBe('fill')
+    expect(getBoardImageObjectFit({ url: 'https://cdn.example.com/pages/123/photo.png' })).toBe('contain')
   })
 })

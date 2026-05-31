@@ -51,6 +51,7 @@ type DragOp =
   | { kind: 'card';        id: string;  mx0: number; my0: number; cx0: number; cy0: number }
   | { kind: 'section';     id: string;  mx0: number; my0: number; cx0: number; cy0: number }
   | { kind: 'image';       id: string;  mx0: number; my0: number; cx0: number; cy0: number }
+  | { kind: 'image-resize'; id: string; handle: string; mx0: number; my0: number; cx0: number; cy0: number; w0: number; h0: number }
   | { kind: 'resize';      id: string; handle: string; mx0: number; my0: number; cx0: number; cy0: number; w0: number; h0: number }
   | { kind: 'lasso' }
   | { kind: 'lasso-move';  mx0: number; my0: number; ids: string[]; origins: Record<string, Pt> }
@@ -569,6 +570,16 @@ export default function BoardView({ pageId }: { pageId: string }) {
     if (op.kind === 'image') {
       const block = page?.blocks.find(b => b.id === op.id); if (!block) return
       updateBlock(pageId, op.id, { content: JSON.stringify({ ...parseBoardImage(block.content), x: op.cx0 + dx, y: op.cy0 + dy }) }); return
+    }
+    if (op.kind === 'image-resize') {
+      const block = page?.blocks.find(b => b.id === op.id); if (!block) return
+      const d = parseBoardImage(block.content)
+      let { w0: w, h0: h, cx0: x, cy0: y } = op; const hh = op.handle
+      if (hh.includes('e')) w = Math.max(80, op.w0 + dx)
+      if (hh.includes('s')) h = Math.max(60, op.h0 + dy)
+      if (hh.includes('w')) { w = Math.max(80, op.w0 - dx); x = op.cx0 + op.w0 - w }
+      if (hh.includes('n')) { h = Math.max(60, op.h0 - dy); y = op.cy0 + op.h0 - h }
+      updateBlock(pageId, op.id, { content: JSON.stringify({ ...d, x, y, width: Math.round(w), height: Math.round(h) }) }); return
     }
     if (op.kind === 'workflow') {
       const block = page?.blocks.find(b => b.id === op.id); if (!block) return
@@ -1273,6 +1284,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
               <div key={id} data-card>
                 <BoardImageCard id={id} data={data} selected={isSel}
                   onDragStart={e => { e.preventDefault(); isSel ? startGroupMove(e) : (dragOp.current = { kind: 'image', id, mx0: e.clientX, my0: e.clientY, cx0: data.x, cy0: data.y }) }}
+                  onResizeHandleMouseDown={(e, handle) => { e.preventDefault(); dragOp.current = { kind: 'image-resize', id, handle, mx0: e.clientX, my0: e.clientY, cx0: data.x, cy0: data.y, w0: data.width, h0: data.height } }}
                   onContextMenu={e => openImageMenu(e, id, data)}
                   onDelete={() => deleteBlock(pageId, id)} />
               </div>

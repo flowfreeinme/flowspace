@@ -21,3 +21,7 @@ export function parseBoardImage(content: string): BoardImageData {
 export function isEditableDrawing(data: Pick<BoardImageData, 'url' | 'kind'>): boolean {
   return data.kind === 'drawing' || DRAWING_UPLOAD_RE.test(data.url)
 }
+
+export function getBoardImageObjectFit(data: Pick<BoardImageData, 'url' | 'kind'>): 'contain' | 'fill' {
+  return isEditableDrawing(data) ? 'fill' : 'contain'
+}

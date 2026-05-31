@@ -2,10 +2,9 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { Check, Eraser, Minus, Paintbrush, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { uploadDrawingToR2 } from '@/lib/r2'
 import { useAuth } from '@/stores/auth'
-import { clampBrushSize, getCanvasPoint, getDrawingExportMime, getDrawingExportSize, getScaledCanvasSize } from '@/lib/drawingCanvas'
+import { clampBrushSize, getCanvasPoint, getDrawingCanvasBackground, getDrawingExportMime, getDrawingExportSize, getScaledCanvasSize } from '@/lib/drawingCanvas'
 
-const COLORS = ['#ffffff', '#7c6af7', '#34a853', '#ea4335', '#fbbc04', '#4285f4', '#ff6d00', '#e91e63', '#00bcd4', '#111827']
-const CANVAS_BG = '#151522'
+const COLORS = ['#111827', '#7c6af7', '#34a853', '#ea4335', '#fbbc04', '#4285f4', '#ff6d00', '#e91e63', '#00bcd4', '#ffffff']
 
 interface Props {
   pageId: string
@@ -31,7 +30,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageU
   const strokesRef = useRef<Stroke[]>([])
   const activePointerRef = useRef<number | null>(null)
   const { user } = useAuth()
-  const [color, setColor] = useState('#ffffff')
+  const [color, setColor] = useState('#111827')
   const [brushSize, setBrushSize] = useState(4)
   const [eraser, setEraser] = useState(false)
   const [strokes, setStrokes] = useState<Stroke[]>([])
@@ -51,7 +50,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageU
     ctx.save()
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = CANVAS_BG
+    ctx.fillStyle = getDrawingCanvasBackground()
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.restore()
     ctx.globalCompositeOperation = 'source-over'
@@ -62,34 +61,45 @@ export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageU
       ctx.drawImage(baseImage, 0, 0, width, height)
     }
 
+    const userLayer = document.createElement('canvas')
+    userLayer.width = canvas.width
+    userLayer.height = canvas.height
+    const userCtx = userLayer.getContext('2d')
+    if (!userCtx) return
+    userCtx.setTransform(ctx.getTransform())
+
     const all = active ? [...allStrokes, active] : allStrokes
     for (const stroke of all) {
       if (stroke.points.length === 0) continue
-      ctx.beginPath()
-      ctx.strokeStyle = stroke.color
-      ctx.lineWidth = stroke.eraser ? stroke.width * 4 : stroke.width
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over'
+      userCtx.beginPath()
+      userCtx.strokeStyle = stroke.color
+      userCtx.lineWidth = stroke.eraser ? stroke.width * 4 : stroke.width
+      userCtx.lineCap = 'round'
+      userCtx.lineJoin = 'round'
+      userCtx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over'
 
       const first = stroke.points[0]
       if (stroke.points.length === 1) {
-        ctx.arc(first.x, first.y, ctx.lineWidth / 2, 0, Math.PI * 2)
-        ctx.fillStyle = stroke.color
-        stroke.eraser ? ctx.fill() : ctx.fill()
+        userCtx.arc(first.x, first.y, userCtx.lineWidth / 2, 0, Math.PI * 2)
+        userCtx.fillStyle = stroke.color
+        userCtx.fill()
         continue
       }
 
-      ctx.moveTo(first.x, first.y)
+      userCtx.moveTo(first.x, first.y)
       for (let i = 1; i < stroke.points.length - 1; i++) {
         const mx = (stroke.points[i].x + stroke.points[i + 1].x) / 2
         const my = (stroke.points[i].y + stroke.points[i + 1].y) / 2
-        ctx.quadraticCurveTo(stroke.points[i].x, stroke.points[i].y, mx, my)
+        userCtx.quadraticCurveTo(stroke.points[i].x, stroke.points[i].y, mx, my)
       }
       const last = stroke.points[stroke.points.length - 1]
-      ctx.lineTo(last.x, last.y)
-      ctx.stroke()
+      userCtx.lineTo(last.x, last.y)
+      userCtx.stroke()
     }
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.drawImage(userLayer, 0, 0)
+    ctx.restore()
     ctx.globalCompositeOperation = 'source-over'
   }, [])
 
@@ -272,7 +282,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageU
         </button>
       </div>
 
-      <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-[#151522]">
+      <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-white">
         <canvas
           ref={canvasRef}
           className="block cursor-crosshair"
@@ -290,7 +300,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageU
         )}
         {strokes.length === 0 && !current && !initialImageUrl && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 text-center">
-            <p className="rounded-full border border-white/5 bg-black/20 px-4 py-2 text-xs text-gray-500">Draw anywhere, then insert it into your board or page.</p>
+            <p className="rounded-full border border-gray-200 bg-white/85 px-4 py-2 text-xs text-gray-500 shadow-sm">Draw anywhere, then insert it into your board or page.</p>
           </div>
         )}
       </div>
