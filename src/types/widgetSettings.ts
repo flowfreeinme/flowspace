@@ -93,4 +93,5 @@ export type WidgetConfigMap = {
   focusTimer: FocusTimerConfig
   weather: WeatherConfig
   calendar: CalendarConfig
+  aiBriefing: Record<string, never>
 }

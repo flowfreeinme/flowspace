@@ -60,6 +60,7 @@ export type HomeWidgetType =
   | 'proPlanner'
   | 'focusTimer'
   | 'weather'
+  | 'aiBriefing'
 
 export interface HomeWidget {
   id: string

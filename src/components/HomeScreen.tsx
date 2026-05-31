@@ -22,6 +22,7 @@ import FocusTimerWidget from './widgets/FocusTimerWidget'
 import WeatherWidget from './widgets/WeatherWidget'
 import ProPlannerWidget from './widgets/ProPlannerWidget'
 import CalendarWidget from './widgets/CalendarWidget'
+import AiBriefingWidget from './widgets/AiBriefingWidget'
 import TodaySettings from './widgets/settings/TodaySettings'
 import FocusQueueSettings from './widgets/settings/FocusQueueSettings'
 import RecentWorkSettings from './widgets/settings/RecentWorkSettings'
@@ -262,6 +263,7 @@ export default function HomeScreen() {
     if (widget.type === 'focusTimer') return <FocusTimerSettings config={getWidgetSettings('focusTimer', widgetSettings)} />
     if (widget.type === 'weather') return <WeatherSettings config={getWidgetSettings('weather', widgetSettings)} />
     if (widget.type === 'calendar') return <CalendarSettings config={getWidgetSettings('calendar', widgetSettings)} />
+    if (widget.type === 'aiBriefing') return null
     return null
   }
 
@@ -278,6 +280,7 @@ export default function HomeScreen() {
     if (widget.type === 'quickCapture') return <QuickCaptureWidget config={getWidgetSettings('quickCapture', widgetSettings)} />
     if (widget.type === 'proPlanner') return <ProPlannerWidget config={getWidgetSettings('proPlanner', widgetSettings)} />
     if (widget.type === 'focusTimer') return <FocusTimerWidget config={getWidgetSettings('focusTimer', widgetSettings)} />
+    if (widget.type === 'aiBriefing') return <AiBriefingWidget />
     return <WeatherWidget config={getWidgetSettings('weather', widgetSettings)} />
   }
 

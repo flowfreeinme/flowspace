@@ -22,6 +22,7 @@ const WIDGET_DEFAULTS: Record<HomeWidgetType, HomeWidget> = {
   proPlanner: { id: 'proPlanner', type: 'proPlanner', x: 0, y: 9, w: 4, h: 3 },
   focusTimer: { id: 'focusTimer', type: 'focusTimer', x: 8, y: 0, w: 4, h: 4 },
   weather: { id: 'weather', type: 'weather', x: 8, y: 4, w: 4, h: 4 },
+  aiBriefing: { id: 'aiBriefing', type: 'aiBriefing', x: 4, y: 0, w: 4, h: 5 },
 }
 
 const AUTO_ARRANGE_ORDER: HomeWidgetType[] = [
@@ -33,6 +34,7 @@ const AUTO_ARRANGE_ORDER: HomeWidgetType[] = [
   'recent',
   'quickCapture',
   'proPlanner',
+  'aiBriefing',
 ]
 
 const AUTO_ARRANGE_SIZES: Record<HomeWidgetType, Pick<HomeWidget, 'w' | 'h'>> = {
@@ -44,6 +46,7 @@ const AUTO_ARRANGE_SIZES: Record<HomeWidgetType, Pick<HomeWidget, 'w' | 'h'>> = 
   recent: { w: 4, h: 4 },
   quickCapture: { w: 4, h: 3 },
   proPlanner: { w: 8, h: 4 },
+  aiBriefing: { w: 4, h: 5 },
 }
 
 export const HOME_WIDGET_CATALOG: Array<{
@@ -58,6 +61,7 @@ export const HOME_WIDGET_CATALOG: Array<{
   { type: 'proPlanner', title: 'AI day planner', description: 'Generate a quick plan from calendar and workspace context.' },
   { type: 'focusTimer', title: 'Max focus timer', description: 'Run deep-work sprints from your home center.' },
   { type: 'weather', title: 'Weather', description: 'Show local conditions or pin any city.' },
+  { type: 'aiBriefing', title: 'AI Briefing', description: 'See what to work on next and pending actions across your workspace.' },
 ]
 
 function clamp(value: number, min: number, max: number) {
