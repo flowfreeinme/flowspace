@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampBrushSize, getCanvasPoint, getScaledCanvasSize, getDrawingExportSize } from './drawingCanvas'
+import { clampBrushSize, getCanvasPoint, getScaledCanvasSize, getDrawingExportSize, getDrawingExportMime, getDrawingCanvasBackground } from './drawingCanvas'
 
 describe('drawing canvas helpers', () => {
   it('keeps brush size in a usable range', () => {
@@ -20,5 +20,13 @@ describe('drawing canvas helpers', () => {
   it('caps export size while preserving aspect ratio', () => {
     expect(getDrawingExportSize(3000, 1500)).toEqual({ width: 1600, height: 800 })
     expect(getDrawingExportSize(1200, 800)).toEqual({ width: 1200, height: 800 })
+  })
+
+  it('exports drawings as png for the broadest storage and browser support', () => {
+    expect(getDrawingExportMime()).toEqual({ mimeType: 'image/png', extension: 'png' })
+  })
+
+  it('uses a white drawing background', () => {
+    expect(getDrawingCanvasBackground()).toBe('#ffffff')
   })
 })

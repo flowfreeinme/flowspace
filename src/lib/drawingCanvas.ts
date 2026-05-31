@@ -1,5 +1,6 @@
 export const MIN_BRUSH_SIZE = 1
 export const MAX_BRUSH_SIZE = 36
+export const DRAWING_CANVAS_BACKGROUND = '#ffffff'
 
 export function clampBrushSize(size: number) {
   return Math.min(MAX_BRUSH_SIZE, Math.max(MIN_BRUSH_SIZE, Math.round(size)))
@@ -34,4 +35,12 @@ export function getDrawingExportSize(width: number, height: number, maxSide = 16
     width: Math.max(1, Math.round(width * scale)),
     height: Math.max(1, Math.round(height * scale)),
   }
+}
+
+export function getDrawingExportMime() {
+  return { mimeType: 'image/png', extension: 'png' }
+}
+
+export function getDrawingCanvasBackground() {
+  return DRAWING_CANVAS_BACKGROUND
 }

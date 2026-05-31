@@ -1,17 +1,22 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import type { BoardImageData } from '@/lib/boardImages'
 
-interface ImageData { url: string; x: number; y: number; width: number; height: number }
-
-export default function BoardImageCard({ id: _id, data, selected, onDragStart, onDelete }: {
-  id: string; data: ImageData; selected: boolean
-  onDragStart: (e: React.MouseEvent) => void; onDelete: () => void
+export default function BoardImageCard({ id: _id, data, selected, onDragStart, onContextMenu, onDelete }: {
+  id: string; data: BoardImageData; selected: boolean
+  onDragStart: (e: React.MouseEvent) => void; onContextMenu: (e: React.MouseEvent) => void; onDelete: () => void
 }) {
   const [hovered, setHovered] = useState(false)
+
   return (
     <div className="absolute select-none" style={{ left: data.x, top: data.y, width: data.width, height: data.height }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      onMouseDown={e => { e.preventDefault(); onDragStart(e) }}>
+      onContextMenu={onContextMenu}
+      onMouseDown={e => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        onDragStart(e)
+      }}>
       <div className={`w-full h-full rounded-2xl overflow-hidden border transition-colors ${
         selected ? 'border-accent ring-2 ring-accent/30' : hovered ? 'border-surface-4' : 'border-surface-3'}`}
         style={{ cursor: 'grab' }}>

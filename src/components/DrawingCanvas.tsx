@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Check, Eraser, Minus, Paintbrush, Plus, RotateCcw, Trash2, X } from 'lucide-react'
-import { uploadToR2 } from '@/lib/r2'
+import { uploadDrawingToR2 } from '@/lib/r2'
 import { useAuth } from '@/stores/auth'
-import { clampBrushSize, getCanvasPoint, getDrawingExportSize, getScaledCanvasSize } from '@/lib/drawingCanvas'
+import { clampBrushSize, getCanvasPoint, getDrawingExportMime, getDrawingExportSize, getScaledCanvasSize } from '@/lib/drawingCanvas'
 
 const COLORS = ['#ffffff', '#7c6af7', '#34a853', '#ea4335', '#fbbc04', '#4285f4', '#ff6d00', '#e91e63', '#00bcd4', '#111827']
 const CANVAS_BG = '#151522'
@@ -11,6 +11,8 @@ interface Props {
   pageId: string
   onInsert: (url: string, name: string, size: number) => void
   onClose: () => void
+  initialImageUrl?: string
+  mode?: 'create' | 'edit'
 }
 
 interface Point { x: number; y: number }
@@ -20,9 +22,11 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number)
   return new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, quality))
 }
 
-export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
+export default function DrawingCanvas({ pageId, onInsert, onClose, initialImageUrl, mode = 'create' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+  const baseImageRef = useRef<HTMLImageElement | null>(null)
+  const canvasCssSizeRef = useRef({ width: 0, height: 0 })
   const currentRef = useRef<Stroke | null>(null)
   const strokesRef = useRef<Stroke[]>([])
   const activePointerRef = useRef<number | null>(null)
@@ -34,6 +38,9 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
   const [current, setCurrent] = useState<Stroke | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [baseImageStatus, setBaseImageStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    initialImageUrl ? 'loading' : 'idle',
+  )
 
   const redraw = useCallback((allStrokes: Stroke[], active: Stroke | null) => {
     const canvas = canvasRef.current
@@ -47,6 +54,13 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
     ctx.fillStyle = CANVAS_BG
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.restore()
+    ctx.globalCompositeOperation = 'source-over'
+
+    const baseImage = baseImageRef.current
+    if (baseImage) {
+      const { width, height } = canvasCssSizeRef.current
+      ctx.drawImage(baseImage, 0, 0, width, height)
+    }
 
     const all = active ? [...allStrokes, active] : allStrokes
     for (const stroke of all) {
@@ -85,6 +99,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
     if (!canvas || !stage) return
     const rect = stage.getBoundingClientRect()
     const { width, height, scale } = getScaledCanvasSize(rect.width, rect.height, window.devicePixelRatio)
+    canvasCssSizeRef.current = { width: rect.width, height: rect.height }
     canvas.width = width
     canvas.height = height
     canvas.style.width = `${rect.width}px`
@@ -103,6 +118,36 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
 
   useEffect(() => { strokesRef.current = strokes }, [strokes])
   useEffect(() => { currentRef.current = current }, [current])
+
+  useEffect(() => {
+    if (!initialImageUrl) {
+      baseImageRef.current = null
+      setBaseImageStatus('idle')
+      redraw(strokesRef.current, currentRef.current)
+      return
+    }
+
+    let cancelled = false
+    const image = new Image()
+    setBaseImageStatus('loading')
+    setError(null)
+    image.onload = () => {
+      if (cancelled) return
+      baseImageRef.current = image
+      setBaseImageStatus('ready')
+      redraw(strokesRef.current, currentRef.current)
+    }
+    image.onerror = () => {
+      if (cancelled) return
+      baseImageRef.current = null
+      setBaseImageStatus('error')
+      setError('Could not load this drawing for editing.')
+      redraw(strokesRef.current, currentRef.current)
+    }
+    image.src = `/api/r2-image?url=${encodeURIComponent(initialImageUrl)}`
+
+    return () => { cancelled = true }
+  }, [initialImageUrl, redraw])
 
   function pointFromPointer(e: React.PointerEvent<HTMLCanvasElement>): Point {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -175,7 +220,7 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
       setError('Sign in again before inserting drawings.')
       return
     }
-    if (strokesRef.current.length === 0) return
+    if (strokesRef.current.length === 0 && !initialImageUrl) return
     setSaving(true)
     setError(null)
     try {
@@ -190,13 +235,18 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
       if (!ctx) throw new Error('Could not prepare this drawing.')
 
       ctx.drawImage(canvas, 0, 0, width, height)
-      const webp = await canvasToBlob(exportCanvas, 'image/webp', 0.86)
-      const blob = webp ?? await canvasToBlob(exportCanvas, 'image/png')
+      const { mimeType, extension } = getDrawingExportMime()
+      const blob = await canvasToBlob(exportCanvas, mimeType)
       if (!blob) throw new Error('Could not export this drawing.')
 
-      const extension = blob.type === 'image/webp' ? 'webp' : 'png'
       const fileName = `drawing.${extension}`
-      const { url } = await uploadToR2(blob, user.id, pageId, fileName)
+      let url: string
+      try {
+        ;({ url } = await uploadDrawingToR2(blob, user.id, pageId, fileName))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Storage upload failed.'
+        throw new Error(`Drawing upload failed: ${message}`)
+      }
       onInsert(url, fileName, blob.size)
       setSaving(false)
     } catch (err) {
@@ -212,8 +262,10 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
           <Paintbrush size={17} />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-white">Draw</h2>
-          <p className="truncate text-xs text-gray-600">Sketch with finger, trackpad, or pencil</p>
+          <h2 className="text-sm font-semibold text-white">{mode === 'edit' ? 'Edit drawing' : 'Draw'}</h2>
+          <p className="truncate text-xs text-gray-600">
+            {mode === 'edit' ? 'Add notes, erase, or draw over the existing image' : 'Sketch with finger, trackpad, or pencil'}
+          </p>
         </div>
         <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-surface-3 hover:text-white" title="Close">
           <X size={18} />
@@ -231,7 +283,12 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
           onPointerCancel={endStroke}
           onLostPointerCapture={endStroke}
         />
-        {strokes.length === 0 && !current && (
+        {baseImageStatus === 'loading' && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 text-center">
+            <p className="rounded-full border border-white/5 bg-black/25 px-4 py-2 text-xs text-gray-400">Loading drawing...</p>
+          </div>
+        )}
+        {strokes.length === 0 && !current && !initialImageUrl && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 text-center">
             <p className="rounded-full border border-white/5 bg-black/20 px-4 py-2 text-xs text-gray-500">Draw anywhere, then insert it into your board or page.</p>
           </div>
@@ -296,11 +353,11 @@ export default function DrawingCanvas({ pageId, onInsert, onClose }: Props) {
 
         <button
           onClick={handleInsert}
-          disabled={saving || strokes.length === 0}
+          disabled={saving || baseImageStatus === 'loading' || (strokes.length === 0 && !initialImageUrl)}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
         >
           <Check size={16} />
-          {saving ? 'Saving drawing...' : 'Insert drawing'}
+          {saving ? 'Saving drawing...' : mode === 'edit' ? 'Save drawing' : 'Insert drawing'}
         </button>
       </div>
     </div>

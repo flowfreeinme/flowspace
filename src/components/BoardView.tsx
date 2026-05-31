@@ -25,6 +25,7 @@ import {
   defaultKanban, defaultFlowchart, defaultTimeline,
 } from '@/lib/workflowBlocks'
 import { buildTodoContext, buildWorkflowContext, formatCalendarEventsForAi } from '@/lib/aiContext'
+import { isEditableDrawing, parseBoardImage, type BoardImageData } from '@/lib/boardImages'
 import {
   BOARD_WIDGET_MIN_HEIGHT,
   BOARD_WIDGET_MIN_WIDTH,
@@ -40,7 +41,6 @@ import { createWorkflowBlockFromAiAction } from '@/lib/aiWorkflowActions'
 // ── types ──────────────────────────────────────────────────────────────────
 interface CardData   { text: string; x: number; y: number; width: number; height: number }
 interface SectionData { title: string; x: number; y: number }
-interface ImageData  { url: string; x: number; y: number; width: number; height: number }
 interface Pt { x: number; y: number }
 interface BBox { x: number; y: number; w: number; h: number }
 
@@ -76,11 +76,6 @@ function parseSection(c: string): SectionData {
   try { const d = JSON.parse(c) as SectionData; if (typeof d.x === 'number') return d } catch {}
   return { title: 'Section', x: 0, y: 260 }
 }
-function parseImage(c: string): ImageData {
-  try { const d = JSON.parse(c) as ImageData; if (typeof d.x === 'number') return d } catch {}
-  return { url: '', x: 0, y: 260, width: 320, height: 220 }
-}
-
 // Ray-casting point-in-polygon
 function pointInPolygon(px: number, py: number, poly: Pt[]): boolean {
   let inside = false
@@ -128,6 +123,8 @@ export default function BoardView({ pageId }: { pageId: string }) {
   const [ctxSubmenu,  setCtxSubmenu]  = useState<'widgets' | null>(null)
   const [aiPanel,     setAiPanel]     = useState<{ sx: number; sy: number } | null>(null)
   const [showDraw,    setShowDraw]    = useState(false)
+  const [editingDrawing, setEditingDrawing] = useState<{ id: string; data: BoardImageData } | null>(null)
+  const [imageMenu, setImageMenu] = useState<{ sx: number; sy: number; id: string; data: BoardImageData } | null>(null)
   const [uploading,   setUploading]   = useState(false)
   const [cardEditing, setCardEditing] = useState(false)
   const [fmt, setFmt] = useState({ bold: false, italic: false, underline: false, strike: false, align: 'left', size: 3 })
@@ -248,7 +245,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
         minX = Math.min(minX, d.x); minY = Math.min(minY, d.y)
         maxX = Math.max(maxX, d.x + SECTION_W); maxY = Math.max(maxY, d.y + SECTION_H)
       } else if (b.type === 'image') {
-        const d = parseImage(b.content)
+        const d = parseBoardImage(b.content)
         minX = Math.min(minX, d.x); minY = Math.min(minY, d.y)
         maxX = Math.max(maxX, d.x + d.width); maxY = Math.max(maxY, d.y + d.height)
       } else if (b.type === 'kanban' || b.type === 'flowchart' || b.type === 'timeline') {
@@ -336,7 +333,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
 
   const cards    = (page?.blocks ?? []).filter(b => b.type === 'textbox').map(b => ({ id: b.id, data: parseCard(b.content) }))
   const sections = (page?.blocks ?? []).filter(b => b.type === 'section').map(b => ({ id: b.id, data: parseSection(b.content) }))
-  const images   = (page?.blocks ?? []).filter(b => b.type === 'image').map(b => ({ id: b.id, data: parseImage(b.content) }))
+  const images   = (page?.blocks ?? []).filter(b => b.type === 'image').map(b => ({ id: b.id, data: parseBoardImage(b.content) }))
   const workflowBlocks = (page?.blocks ?? []).filter(b => b.type === 'kanban' || b.type === 'flowchart' || b.type === 'timeline')
   const boardWidgetBlocks = (page?.blocks ?? []).filter(b => b.type === 'boardWidget')
 
@@ -470,7 +467,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
       if (!selectedIds.has(b.id)) return
       if (b.type === 'textbox') { const d = parseCard(b.content); minX = Math.min(minX, d.x); minY = Math.min(minY, d.y); maxX = Math.max(maxX, d.x + d.width); maxY = Math.max(maxY, d.y + d.height) }
       else if (b.type === 'section') { const d = parseSection(b.content); minX = Math.min(minX, d.x); minY = Math.min(minY, d.y); maxX = Math.max(maxX, d.x + SECTION_W); maxY = Math.max(maxY, d.y + SECTION_H) }
-      else if (b.type === 'image') { const d = parseImage(b.content); minX = Math.min(minX, d.x); minY = Math.min(minY, d.y); maxX = Math.max(maxX, d.x + d.width); maxY = Math.max(maxY, d.y + d.height) }
+      else if (b.type === 'image') { const d = parseBoardImage(b.content); minX = Math.min(minX, d.x); minY = Math.min(minY, d.y); maxX = Math.max(maxX, d.x + d.width); maxY = Math.max(maxY, d.y + d.height) }
       else if (b.type === 'kanban' || b.type === 'flowchart' || b.type === 'timeline') {
         const parse = b.type === 'kanban' ? parseKanban : b.type === 'flowchart' ? parseFlowchart : parseTimeline
         const d = parse(b.content)
@@ -514,7 +511,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
         const block = useWorkspace.getState().pages[pageId]?.blocks.find(b => b.id === id); if (!block) return
         if (block.type === 'textbox') updateBlock(pageId, id, { content: JSON.stringify({ ...parseCard(block.content), x: origin.x + dx, y: origin.y + dy }) })
         else if (block.type === 'section') updateBlock(pageId, id, { content: JSON.stringify({ ...parseSection(block.content), x: origin.x + dx, y: origin.y + dy }) })
-        else if (block.type === 'image') updateBlock(pageId, id, { content: JSON.stringify({ ...parseImage(block.content), x: origin.x + dx, y: origin.y + dy }) })
+        else if (block.type === 'image') updateBlock(pageId, id, { content: JSON.stringify({ ...parseBoardImage(block.content), x: origin.x + dx, y: origin.y + dy }) })
         else if (block.type === 'kanban' || block.type === 'flowchart' || block.type === 'timeline') {
           const parse = block.type === 'kanban' ? parseKanban : block.type === 'flowchart' ? parseFlowchart : parseTimeline
           updateBlock(pageId, id, { content: JSON.stringify({ ...parse(block.content), x: origin.x + dx, y: origin.y + dy }) })
@@ -542,7 +539,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
           const d = parseCard(block.content)
           updateBlock(pageId, id, { content: JSON.stringify({ ...d, x: nx, y: ny, width: Math.max(80, (orig.w ?? d.width) * sx), height: Math.max(40, (orig.h ?? d.height) * sy) }) })
         } else if (block.type === 'image') {
-          const d = parseImage(block.content)
+          const d = parseBoardImage(block.content)
           updateBlock(pageId, id, { content: JSON.stringify({ ...d, x: nx, y: ny, width: Math.max(60, (orig.w ?? d.width) * sx), height: Math.max(40, (orig.h ?? d.height) * sy) }) })
         } else if (block.type === 'section') {
           const d = parseSection(block.content)
@@ -571,7 +568,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
     }
     if (op.kind === 'image') {
       const block = page?.blocks.find(b => b.id === op.id); if (!block) return
-      updateBlock(pageId, op.id, { content: JSON.stringify({ ...parseImage(block.content), x: op.cx0 + dx, y: op.cy0 + dy }) }); return
+      updateBlock(pageId, op.id, { content: JSON.stringify({ ...parseBoardImage(block.content), x: op.cx0 + dx, y: op.cy0 + dy }) }); return
     }
     if (op.kind === 'workflow') {
       const block = page?.blocks.find(b => b.id === op.id); if (!block) return
@@ -628,7 +625,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
         p?.blocks.forEach(b => {
           if (b.type === 'textbox') { const d = parseCard(b.content); if (polyHitsRect(poly, d.x, d.y, d.width, d.height)) hits.add(b.id) }
           else if (b.type === 'section') { const d = parseSection(b.content); if (polyHitsRect(poly, d.x, d.y, SECTION_W, SECTION_H)) hits.add(b.id) }
-          else if (b.type === 'image') { const d = parseImage(b.content); if (polyHitsRect(poly, d.x, d.y, d.width, d.height)) hits.add(b.id) }
+          else if (b.type === 'image') { const d = parseBoardImage(b.content); if (polyHitsRect(poly, d.x, d.y, d.width, d.height)) hits.add(b.id) }
           else if (b.type === 'kanban' || b.type === 'flowchart' || b.type === 'timeline') {
             const parse = b.type === 'kanban' ? parseKanban : b.type === 'flowchart' ? parseFlowchart : parseTimeline
             const d = parse(b.content)
@@ -666,14 +663,22 @@ export default function BoardView({ pageId }: { pageId: string }) {
     useWorkspace.getState().persist()
   }
 
-  function addImage(url: string) {
+  function addImage(url: string, overrides: Partial<Pick<BoardImageData, 'kind'>> = {}) {
     const r = viewportRef.current?.getBoundingClientRect() ?? { width: 800, height: 600 }
     const cx = (r.width / 2 - panRef.current.x) / zoomRef.current - 160
     const cy = (r.height / 2 - panRef.current.y) / zoomRef.current - 110
-    const id = uuid(); const data: ImageData = { url, x: cx, y: cy, width: 320, height: 220 }
+    const id = uuid(); const data: BoardImageData = { url, x: cx, y: cy, width: 320, height: 220, ...overrides }
     const p = pages[pageId]; if (!p) return
     useWorkspace.setState(s => ({ pages: { ...s.pages, [pageId]: { ...p, blocks: [...p.blocks, { id, type: 'image' as const, content: JSON.stringify(data) }], updatedAt: Date.now() } } }))
     useWorkspace.getState().persist()
+  }
+
+  function saveEditedDrawing(url: string) {
+    if (!editingDrawing) return
+    updateBlock(pageId, editingDrawing.id, {
+      content: JSON.stringify({ ...editingDrawing.data, url, kind: 'drawing' satisfies BoardImageData['kind'] }),
+    })
+    setEditingDrawing(null)
   }
 
   async function handleAttach(e: React.ChangeEvent<HTMLInputElement>) {
@@ -741,7 +746,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
       const block = p?.blocks.find(b => b.id === id); if (!block) return
       if (block.type === 'textbox') { const d = parseCard(block.content); origins[id] = { x: d.x, y: d.y } }
       else if (block.type === 'section') { const d = parseSection(block.content); origins[id] = { x: d.x, y: d.y } }
-      else if (block.type === 'image') { const d = parseImage(block.content); origins[id] = { x: d.x, y: d.y } }
+      else if (block.type === 'image') { const d = parseBoardImage(block.content); origins[id] = { x: d.x, y: d.y } }
       else if (block.type === 'kanban' || block.type === 'flowchart' || block.type === 'timeline') {
         const parse = block.type === 'kanban' ? parseKanban : block.type === 'flowchart' ? parseFlowchart : parseTimeline
         const d = parse(block.content)
@@ -762,7 +767,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
       const block = p?.blocks.find(b => b.id === id); if (!block) return
       if (block.type === 'textbox') { const d = parseCard(block.content); items0[id] = { x: d.x, y: d.y, w: d.width, h: d.height } }
       else if (block.type === 'section') { const d = parseSection(block.content); items0[id] = { x: d.x, y: d.y } }
-      else if (block.type === 'image') { const d = parseImage(block.content); items0[id] = { x: d.x, y: d.y, w: d.width, h: d.height } }
+      else if (block.type === 'image') { const d = parseBoardImage(block.content); items0[id] = { x: d.x, y: d.y, w: d.width, h: d.height } }
       else if (block.type === 'kanban' || block.type === 'flowchart' || block.type === 'timeline') {
         const parse = block.type === 'kanban' ? parseKanban : block.type === 'flowchart' ? parseFlowchart : parseTimeline
         const d = parse(block.content)
@@ -778,6 +783,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
   function handleViewportMouseDown(e: React.MouseEvent) {
     setWorkflowMenu(false)
     setWidgetMenu(false)
+    setImageMenu(null)
     if ((e.target as HTMLElement).closest('[data-card],[data-title],[data-section],[data-bbox]')) return
     if (e.button !== 0) return
     if (activeTool === 'lasso') {
@@ -803,6 +809,16 @@ export default function BoardView({ pageId }: { pageId: string }) {
     setCtxSubmenu(null)
     const { x: cx, y: cy } = screenToCanvas(e.clientX, e.clientY)
     setCtxMenu({ sx: e.clientX, sy: e.clientY, cx, cy })
+  }
+
+  function openImageMenu(e: React.MouseEvent, id: string, data: BoardImageData) {
+    e.preventDefault()
+    e.stopPropagation()
+    setCtxMenu(null)
+    setCtxSubmenu(null)
+    setWorkflowMenu(false)
+    setWidgetMenu(false)
+    setImageMenu({ sx: e.clientX, sy: e.clientY, id, data })
   }
 
   function zoomBy(factor: number) {
@@ -1257,6 +1273,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
               <div key={id} data-card>
                 <BoardImageCard id={id} data={data} selected={isSel}
                   onDragStart={e => { e.preventDefault(); isSel ? startGroupMove(e) : (dragOp.current = { kind: 'image', id, mx0: e.clientX, my0: e.clientY, cx0: data.x, cy0: data.y }) }}
+                  onContextMenu={e => openImageMenu(e, id, data)}
                   onDelete={() => deleteBlock(pageId, id)} />
               </div>
             )
@@ -1339,6 +1356,36 @@ export default function BoardView({ pageId }: { pageId: string }) {
         </div>
       )}
 
+      {imageMenu && (
+        <div
+          className="fixed z-[70] min-w-[160px] rounded-xl border border-surface-4 bg-surface-2 py-1 shadow-2xl"
+          style={{ left: imageMenu.sx, top: imageMenu.sy }}
+          onMouseDown={e => e.stopPropagation()}
+          onMouseLeave={() => setImageMenu(null)}
+        >
+          <button
+            onClick={() => {
+              setEditingDrawing({ id: imageMenu.id, data: imageMenu.data })
+              setImageMenu(null)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-surface-3 hover:text-white"
+          >
+            <Pencil size={13} />
+            {isEditableDrawing(imageMenu.data) ? 'Edit drawing' : 'Edit image'}
+          </button>
+          <button
+            onClick={() => {
+              deleteBlock(pageId, imageMenu.id)
+              setImageMenu(null)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-surface-3 hover:text-red-300"
+          >
+            <Trash2 size={13} />
+            Delete
+          </button>
+        </div>
+      )}
+
       {/* Collaborator presence avatars */}
       {collaborators.length > 0 && (
         <div className="fixed top-3 right-6 z-40 flex items-center gap-1.5">
@@ -1356,7 +1403,22 @@ export default function BoardView({ pageId }: { pageId: string }) {
       )}
 
       {/* Drawing canvas */}
-      {showDraw && <DrawingCanvas pageId={pageId} onInsert={url => { addImage(url); setShowDraw(false) }} onClose={() => setShowDraw(false)} />}
+      {showDraw && (
+        <DrawingCanvas
+          pageId={pageId}
+          onInsert={url => { addImage(url, { kind: 'drawing' }); setShowDraw(false) }}
+          onClose={() => setShowDraw(false)}
+        />
+      )}
+      {editingDrawing && (
+        <DrawingCanvas
+          pageId={pageId}
+          mode="edit"
+          initialImageUrl={editingDrawing.data.url}
+          onInsert={saveEditedDrawing}
+          onClose={() => setEditingDrawing(null)}
+        />
+      )}
 
       {/* Hidden file input */}
       <input ref={attachRef} type="file" accept="image/*,video/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={handleAttach} />
