@@ -3,7 +3,8 @@ import { X, Send, Sparkles, Wand2, Check } from 'lucide-react'
 import { useAuth } from '@/stores/auth'
 import { useCalendar } from '@/stores/calendar'
 import { supabase } from '@/lib/supabase'
-import { routeLocally } from '@/lib/aiRouter'
+import { routeLocally, isSecondBrainQuery } from '@/lib/aiRouter'
+import { useAiInsightsStore } from '@/stores/aiInsightsStore'
 import { getCalendarEventsForAi } from '@/lib/aiCalendarEvents'
 import { formatCalendarEventsForAi, resolveCalendarRangeForPrompt } from '@/lib/aiContext'
 import { buildCalendarTimelineResponse } from '@/lib/aiCalendarTimeline'
@@ -115,6 +116,32 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         setTimeout(() => inputRef.current?.focus(), 50)
         return
       }
+    }
+
+    if (isSecondBrainQuery(text)) {
+      const { whatNext, byPage } = useAiInsightsStore.getState()
+
+      const actionLines: string[] = Object.values(byPage)
+        .filter(p => p.status === 'ready' && p.actionItems.length > 0)
+        .flatMap(p => p.actionItems.slice(0, 2))
+        .slice(0, 5)
+
+      let reply = ''
+      if (whatNext) {
+        reply += `I'd suggest opening **${whatNext.title}** — ${whatNext.reason}`
+        if (actionLines.length) {
+          reply += `\n\nYou also have ${actionLines.length} pending action${actionLines.length !== 1 ? 's' : ''} across your workspace:\n${actionLines.map(a => `• ${a}`).join('\n')}`
+        }
+      } else if (actionLines.length) {
+        reply = `Here are pending actions across your workspace:\n${actionLines.map(a => `• ${a}`).join('\n')}`
+      } else {
+        reply = 'Open and edit some pages first — I\'ll start building a picture of your workspace and can then suggest what to focus on.'
+      }
+
+      setMessages(m => [...m, { role: 'assistant', content: reply }])
+      setLoading(false)
+      setTimeout(() => inputRef.current?.focus(), 50)
+      return
     }
 
     const boardCtx = workspaceContext.board ?? { title: '', sections: [], cards: [] }
