@@ -12,6 +12,10 @@ import ImageCropModal from './ImageCropModal'
 import ResizableBlock from './ResizableBlock'
 import AiTextToolbar from './AiTextToolbar'
 import DatabaseBlock from './database/DatabaseBlock'
+import { supabase } from '@/lib/supabase'
+import { detectCandidateActions, findRelatedPages } from '@/lib/aiInsights'
+import { useAiInsightsStore } from '@/stores/aiInsightsStore'
+import PageInsightBar from '@/components/PageInsightBar'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25 MB
 
@@ -485,6 +489,33 @@ export default function BlockEditor({ pageId, onRequestFileUpload }: BlockEditor
     })
   }, [onRequestFileUpload, user, page, pageId, notify])
 
+  const analyzeOnSave = useAiInsightsStore(s => s.analyzeOnSave)
+  const openTab = useWorkspace(s => s.openTab)
+
+  useEffect(() => {
+    if (!page) return
+    const hasContent = page.blocks.some(b => b.content.trim().length > 10)
+    if (!hasContent) return
+
+    const allPages = Object.values(useWorkspace.getState().pages)
+    const candidateActions = detectCandidateActions(page)
+    const heuristicRelated = findRelatedPages(page, allPages)
+    const pageSummaries = allPages
+      .filter(p => !p.archived && !(p as any).database)
+      .map(p => ({ id: p.id, title: p.title || 'Untitled', updatedAt: p.updatedAt }))
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      analyzeOnSave(
+        page.id,
+        page.blocks.map(b => b.content).join('\n').slice(0, 1500),
+        candidateActions,
+        heuristicRelated,
+        pageSummaries,
+        session?.access_token ?? null
+      )
+    })
+  }, [page?.blocks])
+
   if (!page) return null
 
   const now = new Date()
@@ -545,6 +576,12 @@ export default function BlockEditor({ pageId, onRequestFileUpload }: BlockEditor
 
   return (
     <div ref={containerRef} className="flex flex-col gap-1 w-full">
+      {page && (
+        <PageInsightBar
+          pageId={page.id}
+          onNavigate={openTab}
+        />
+      )}
       <AiTextToolbar
         containerRef={containerRef}
         workspaceContext={workspaceContext}
