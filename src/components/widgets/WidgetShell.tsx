@@ -77,7 +77,7 @@ export default function WidgetShell({
     <section
       onClickCapture={handleClickCapture}
       onPointerDown={handlePointerDown}
-      className={`relative min-h-0 overflow-hidden rounded-2xl border bg-surface-1 shadow-sm transition-colors ${
+      className={`group/widget relative min-h-0 overflow-hidden rounded-2xl border bg-surface-1 shadow-sm transition-colors ${
         editingHome ? 'select-none border-accent/45 ring-1 ring-accent/20' : 'border-surface-3'
       } ${isResizing ? 'z-20 border-accent ring-2 ring-accent/30' : ''} ${
         isDragging ? 'z-20 opacity-75 cursor-grabbing' : editingHome && !isResizing ? 'cursor-grab' : ''
@@ -85,7 +85,7 @@ export default function WidgetShell({
       style={widgetGridStyle(widget, isMobile)}
     >
       <div
-        className="absolute right-2 top-2 z-50 flex items-center gap-1 group/widget"
+        className="absolute right-2 top-2 z-50 flex items-center gap-1"
         data-home-widget-edit-control="true"
       >
         <WidgetSettingsPopover

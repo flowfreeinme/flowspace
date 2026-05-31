@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Settings } from 'lucide-react'
 
 interface WidgetSettingsPopoverProps {
@@ -13,6 +13,7 @@ export default function WidgetSettingsPopover({
 }: WidgetSettingsPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -35,11 +36,21 @@ export default function WidgetSettingsPopover({
     }
   }, [open, onClose])
 
+  function handleOpen(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (open) { onClose(); return }
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    onOpen()
+  }
+
   return (
     <div className="relative" data-home-widget-edit-control="true">
       <button
         ref={buttonRef}
-        onClick={e => { e.stopPropagation(); open ? onClose() : onOpen() }}
+        onClick={handleOpen}
         className="flex h-6 w-6 items-center justify-center rounded-md text-gray-500 opacity-0 transition-opacity hover:bg-surface-3 hover:text-gray-300 group-hover/widget:opacity-100"
         title="Widget settings"
         aria-label="Widget settings"
@@ -47,10 +58,11 @@ export default function WidgetSettingsPopover({
         <Settings size={13} />
       </button>
 
-      {open && (
+      {open && pos && (
         <div
           ref={popoverRef}
-          className="absolute right-0 top-8 z-50 w-72 rounded-xl border border-surface-4 bg-surface-2 p-3 shadow-2xl"
+          className="fixed z-[9999] w-72 rounded-xl border border-surface-4 bg-surface-2 p-3 shadow-2xl"
+          style={{ top: pos.top, right: pos.right }}
           data-home-widget-edit-control="true"
           onPointerDown={e => e.stopPropagation()}
         >

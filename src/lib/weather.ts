@@ -19,6 +19,9 @@ export interface WeatherSummary {
   precipitation: number
   high: number
   low: number
+  uvIndex: number
+  sunrise: string | null
+  sunset: string | null
   condition: WeatherCondition
 }
 
@@ -35,7 +38,7 @@ export function buildWeatherForecastUrl(location: Pick<WeatherLocation, 'latitud
       'precipitation',
       'is_day',
     ].join(','),
-    daily: ['temperature_2m_max', 'temperature_2m_min'].join(','),
+    daily: ['temperature_2m_max', 'temperature_2m_min', 'sunrise', 'sunset', 'uv_index_max'].join(','),
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
     precipitation_unit: 'inch',
@@ -116,6 +119,16 @@ export function parseWeatherForecast(data: unknown): WeatherSummary {
   const weatherCode = finiteNumber(current.weather_code)
   const isDay = current.is_day !== 0
 
+  const rawSunrise = Array.isArray(daily.sunrise) ? daily.sunrise[0] : null
+  const rawSunset = Array.isArray(daily.sunset) ? daily.sunset[0] : null
+
+  function fmtTime(iso: unknown): string | null {
+    if (typeof iso !== 'string') return null
+    try {
+      return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    } catch { return null }
+  }
+
   return {
     temperature: finiteNumber(current.temperature_2m),
     feelsLike: finiteNumber(current.apparent_temperature),
@@ -124,6 +137,9 @@ export function parseWeatherForecast(data: unknown): WeatherSummary {
     precipitation: finiteNumber(current.precipitation),
     high: finiteNumber(high),
     low: finiteNumber(low),
+    uvIndex: finiteNumber(Array.isArray(daily.uv_index_max) ? daily.uv_index_max[0] : 0),
+    sunrise: fmtTime(rawSunrise),
+    sunset: fmtTime(rawSunset),
     condition: getWeatherCondition(weatherCode, isDay),
   }
 }
