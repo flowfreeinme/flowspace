@@ -22,13 +22,15 @@ export default async function handler(req: any, res: any) {
     const embedding = await getEmbedding(text)
 
     // pgvector expects the array as a literal string '[0.1,0.2,...]'
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from('ai_chat_history')
       .update({ embedding: `[${embedding.join(',')}]` })
       .eq('id', messageId)
       .eq('user_id', data.user.id)
+      .select('id', { count: 'exact', head: true })
 
     if (error) return res.status(500).json({ error: error.message })
+    if (!count) return res.status(404).json({ error: 'Message not found' })
     return res.json({ ok: true })
   } catch (err: any) {
     return res.status(500).json({ error: err?.message ?? 'Internal error' })
