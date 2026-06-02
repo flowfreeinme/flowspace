@@ -9,6 +9,7 @@ export async function getEmbedding(text: string): Promise<number[]> {
 
   const res = await fetch(HF_URL, {
     method: 'POST',
+    signal: AbortSignal.timeout(8_000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',

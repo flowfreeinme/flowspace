@@ -114,6 +114,13 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
           content: timeline.message,
           actions: timeline.actions.length ? timeline.actions : undefined,
         }])
+        Promise.all([
+          saveToMemory(sessionIdRef.current, 'user', text),
+          saveToMemory(sessionIdRef.current, 'assistant', timeline.message),
+        ]).then(([userId, assistantId]) => {
+          if (userId) embedMessage(userId, text)
+          if (assistantId) embedMessage(assistantId, timeline.message)
+        }).catch(() => {})
         setLoading(false)
         setTimeout(() => inputRef.current?.focus(), 50)
         return
@@ -141,6 +148,13 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
       }
 
       setMessages(m => [...m, { role: 'assistant', content: reply }])
+      Promise.all([
+        saveToMemory(sessionIdRef.current, 'user', text),
+        saveToMemory(sessionIdRef.current, 'assistant', reply),
+      ]).then(([userId, assistantId]) => {
+        if (userId) embedMessage(userId, text)
+        if (assistantId) embedMessage(assistantId, reply)
+      }).catch(() => {})
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 50)
       return
@@ -154,6 +168,13 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         content: local.message!,
         actions: local.actions?.length ? local.actions : undefined,
       }])
+      Promise.all([
+        saveToMemory(sessionIdRef.current, 'user', text),
+        saveToMemory(sessionIdRef.current, 'assistant', local.message!),
+      ]).then(([userId, assistantId]) => {
+        if (userId) embedMessage(userId, text)
+        if (assistantId) embedMessage(assistantId, local.message!)
+      }).catch(() => {})
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 50)
       return
