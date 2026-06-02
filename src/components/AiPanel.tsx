@@ -230,7 +230,7 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         ]).then(([userId, assistantId]) => {
           if (userId) embedMessage(userId, text)
           if (assistantId) embedMessage(assistantId, data.message)
-        })
+        }).catch(() => {})
       } else {
         setMessages(m => [...m, {
           role: 'assistant',
