@@ -199,7 +199,6 @@ export default function Sidebar() {
     rootPages,
     pages,
     createPage,
-    createBoard,
     createDatabase,
     createFolder,
     openTab,

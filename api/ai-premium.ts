@@ -11,7 +11,7 @@ function buildSystemPrompt(ctx: any): string {
   const parts: string[] = []
 
   if (ctx?.mode === 'board' && ctx.board) {
-    parts.push(`You are a powerful AI research assistant inside FlowSpace, a visual board workspace.`)
+    parts.push(`You are FlowSpace's AI research assistant with full access to the user's workspace. Ground every response in the user's actual boards, cards, tasks, and calendar events — reference them by exact name. Only give generic advice if no relevant context exists.`)
     parts.push(`The user is viewing a board called "${ctx.board.title || 'Untitled'}".`)
     if (ctx.board.sections?.length) {
       parts.push(`Board sections:\n${ctx.board.sections.map((s: any) => `- ${s.title}`).join('\n')}`)
@@ -20,14 +20,14 @@ function buildSystemPrompt(ctx: any): string {
       parts.push(`Board cards:\n${ctx.board.cards.map((c: any) => `- ${c.text}`).filter((t: string) => t.trim()).join('\n')}`)
     }
   } else if (ctx?.mode === 'page' && ctx.page) {
-    parts.push(`You are a powerful AI research assistant inside FlowSpace.`)
+    parts.push(`You are FlowSpace's AI research assistant. Ground every response in the user's actual workspace — reference specific pages, tasks, and events by name. Only give generic advice if no relevant context exists.`)
     parts.push(`The user is editing a page called "${ctx.page.title || 'Untitled'}".`)
     if (ctx.page.blocks?.length) {
       const text = ctx.page.blocks.map((b: any) => b.content).join('\n').slice(0, 2000)
       parts.push(`Page content:\n${text}`)
     }
   } else {
-    parts.push(`You are a powerful AI research assistant inside FlowSpace.`)
+    parts.push(`You are FlowSpace's AI research assistant. Reference the user's workspace context specifically — cite exact board names, card titles, and calendar events when relevant.`)
   }
 
   if (ctx?.allBoards?.length) {
@@ -70,13 +70,12 @@ function buildSystemPrompt(ctx: any): string {
   }
 
   parts.push(`Answer the user's question thoroughly. Use web search when current or factual information would help.
-Ground answers in the provided workspace context before inventing new tasks.
+Be specific — cite exact board names, card titles, page names, and calendar events from the context above. Never be vague when concrete workspace data is available.
 Prioritize unchecked board to-do widget tasks over completed tasks or brand-new suggestions.
-When useful, mention the exact board/page that contains a task.
 If the request is ambiguous but enough context exists, make a practical assumption and proceed.
 When planning days or task systems, use calendar event times/locations, unchecked to-do widget tasks, timeline dated items, kanban status, and flowchart order together.
 When the user requests a calendar range, use every listed calendar event in earliest-to-latest order.
-Respond in plain, readable text. Be direct and useful.`)
+Respond in plain, readable text. Be direct, specific, and actionable.`)
 
   return parts.join('\n\n')
 }

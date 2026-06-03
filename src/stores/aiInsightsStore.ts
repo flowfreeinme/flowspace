@@ -35,7 +35,7 @@ interface AiInsightsState {
 
 const timers: Record<string, ReturnType<typeof setTimeout>> = {}
 
-export const useAiInsightsStore = create<AiInsightsState>((set, get) => ({
+export const useAiInsightsStore = create<AiInsightsState>((set) => ({
   byPage: {},
   whatNext: null,
   dismissedHints: new Set(),

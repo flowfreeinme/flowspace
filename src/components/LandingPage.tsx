@@ -467,7 +467,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                 <div className="flex items-center justify-between px-3 py-2 border-b border-surface-3 bg-surface-2/60">
                   <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Kanban block</span>
                   <div className="flex gap-1">
-                    {['bg-accent/40', 'bg-surface-4', 'bg-surface-4'].map((c, i) => (
+                    {['bg-accent/40', 'bg-surface-4', 'bg-surface-4'].map((_, i) => (
                       <div key={i} className={`text-[7px] px-1.5 py-0.5 rounded ${i === 0 ? 'bg-accent/20 text-accent' : 'bg-surface-3 text-gray-600'}`}>
                         {['Kanban', 'Flow', 'Timeline'][i]}
                       </div>

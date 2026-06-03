@@ -1498,9 +1498,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
           const SECTION_COL_W = 320
           const START_X = 0
           const START_Y = 260
-          const CARD_H = 170
-          const CARD_W = 280
-          const CARD_HEIGHT = 140
+          const CARD_STEP = 170
 
           const currentPage = useWorkspace.getState().pages[pageId]
           if (!currentPage) return
@@ -1556,9 +1554,9 @@ export default function BoardView({ pageId }: { pageId: string }) {
                 content: JSON.stringify({
                   text: a.text,
                   x: secPos.x,
-                  y: secPos.y + 50 + idx * CARD_H,
+                  y: secPos.y + 50 + idx * CARD_STEP,
                   width: CARD_W,
-                  height: CARD_HEIGHT,
+                  height: CARD_H,
                 }),
               })
             }
@@ -1618,7 +1616,7 @@ export default function BoardView({ pageId }: { pageId: string }) {
                     try {
                       const d = JSON.parse(b.content)
                       if (d.text?.toLowerCase() === cardNeedle) {
-                        return { ...b, content: JSON.stringify({ ...d, x: secData.x, y: secData.y + 50 + cardsInTarget * CARD_H, width: CARD_W, height: Math.max(d.height, CARD_HEIGHT) }) }
+                        return { ...b, content: JSON.stringify({ ...d, x: secData.x, y: secData.y + 50 + cardsInTarget * CARD_STEP, width: CARD_W, height: Math.max(d.height, CARD_H) }) }
                       }
                     } catch {}
                     return b

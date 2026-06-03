@@ -16,8 +16,8 @@ export function nextPosition(rows: Pick<DatabaseRow, 'position'>[]): number {
 }
 
 export function reorderPositions(
-  rows: Pick<DatabaseRow, 'id' | 'position'>[],
-  rowId: string,
+  _rows: Pick<DatabaseRow, 'id' | 'position'>[],
+  _rowId: string,
   beforePosition: number,
   afterPosition: number,
 ): number {

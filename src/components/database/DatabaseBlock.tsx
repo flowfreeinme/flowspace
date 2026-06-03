@@ -9,7 +9,7 @@ import RowModal from './RowModal'
 
 interface Props { block: Block; pageId: string }
 
-export default function DatabaseBlock({ block, pageId }: Props) {
+export default function DatabaseBlock({ block }: Props) {
   const dbId = block.content
   const { databases, loading, loadDatabase, createDatabase } = useDatabase()
   const { user } = useAuth()

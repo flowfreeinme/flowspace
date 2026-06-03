@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
-import { X, GripVertical, Plus } from 'lucide-react'
+import { X, GripVertical } from 'lucide-react'
 import { useDatabase } from '@/stores/database'
 import type { PropertyDef, PropertyType } from '@/lib/databaseTypes'
 import { TITLE_PROP_ID } from '@/lib/databaseTypes'
