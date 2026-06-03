@@ -3,7 +3,9 @@ import { X, Send, Sparkles, Wand2, Check } from 'lucide-react'
 import { useAuth } from '@/stores/auth'
 import { useCalendar } from '@/stores/calendar'
 import { supabase } from '@/lib/supabase'
-import { routeLocally } from '@/lib/aiRouter'
+import { routeLocally, isSecondBrainQuery } from '@/lib/aiRouter'
+import { saveToMemory, embedMessage } from '@/lib/aiMemory'
+import { useAiInsightsStore } from '@/stores/aiInsightsStore'
 import { getCalendarEventsForAi } from '@/lib/aiCalendarEvents'
 import { formatCalendarEventsForAi, resolveCalendarRangeForPrompt } from '@/lib/aiContext'
 import { buildCalendarTimelineResponse } from '@/lib/aiCalendarTimeline'
@@ -70,6 +72,7 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
   const [apiUsage, setApiUsage] = useState(() => getUsageCount(user?.id ?? ''))
   const inputRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const sessionIdRef = useRef(crypto.randomUUID())
 
   const apiRemaining = DAILY_LIMIT - apiUsage
   const apiLimitReached = apiRemaining <= 0
@@ -111,10 +114,50 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
           content: timeline.message,
           actions: timeline.actions.length ? timeline.actions : undefined,
         }])
+        Promise.all([
+          saveToMemory(sessionIdRef.current, 'user', text),
+          saveToMemory(sessionIdRef.current, 'assistant', timeline.message),
+        ]).then(([userId, assistantId]) => {
+          if (userId) embedMessage(userId, text)
+          if (assistantId) embedMessage(assistantId, timeline.message)
+        }).catch(() => {})
         setLoading(false)
         setTimeout(() => inputRef.current?.focus(), 50)
         return
       }
+    }
+
+    if (isSecondBrainQuery(text)) {
+      const { whatNext, byPage } = useAiInsightsStore.getState()
+
+      const actionLines: string[] = Object.values(byPage)
+        .filter(p => p.status === 'ready' && p.actionItems.length > 0)
+        .flatMap(p => p.actionItems.slice(0, 2))
+        .slice(0, 5)
+
+      let reply = ''
+      if (whatNext) {
+        reply += `I'd suggest opening **${whatNext.title}** — ${whatNext.reason}`
+        if (actionLines.length) {
+          reply += `\n\nYou also have ${actionLines.length} pending action${actionLines.length !== 1 ? 's' : ''} across your workspace:\n${actionLines.map(a => `• ${a}`).join('\n')}`
+        }
+      } else if (actionLines.length) {
+        reply = `Here are pending actions across your workspace:\n${actionLines.map(a => `• ${a}`).join('\n')}`
+      } else {
+        reply = 'Open and edit some pages first — I\'ll start building a picture of your workspace and can then suggest what to focus on.'
+      }
+
+      setMessages(m => [...m, { role: 'assistant', content: reply }])
+      Promise.all([
+        saveToMemory(sessionIdRef.current, 'user', text),
+        saveToMemory(sessionIdRef.current, 'assistant', reply),
+      ]).then(([userId, assistantId]) => {
+        if (userId) embedMessage(userId, text)
+        if (assistantId) embedMessage(assistantId, reply)
+      }).catch(() => {})
+      setLoading(false)
+      setTimeout(() => inputRef.current?.focus(), 50)
+      return
     }
 
     const boardCtx = workspaceContext.board ?? { title: '', sections: [], cards: [] }
@@ -125,6 +168,13 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         content: local.message!,
         actions: local.actions?.length ? local.actions : undefined,
       }])
+      Promise.all([
+        saveToMemory(sessionIdRef.current, 'user', text),
+        saveToMemory(sessionIdRef.current, 'assistant', local.message!),
+      ]).then(([userId, assistantId]) => {
+        if (userId) embedMessage(userId, text)
+        if (assistantId) embedMessage(assistantId, local.message!)
+      }).catch(() => {})
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 50)
       return
@@ -166,6 +216,11 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         ...workflow,
         items: workflow.items.slice(0, 8).map(item => item.slice(0, 180)),
       })),
+      todos: workspaceContext.todos?.slice(0, 12).map(todo => ({
+        pageTitle: todo.pageTitle.slice(0, 80),
+        open: todo.open.slice(0, 12).map(item => item.slice(0, 160)),
+        done: todo.done.slice(0, 8).map(item => item.slice(0, 160)),
+      })),
     }
 
     try {
@@ -179,6 +234,7 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
         body: JSON.stringify({
           messages: apiMessages.map(m => ({ role: m.role, content: m.content })),
           workspaceContext: trimmedContext,
+          sessionId: sessionIdRef.current,
         }),
       })
       const data = await res.json()
@@ -188,6 +244,14 @@ export default function AiPanel({ x, y, workspaceContext, calendarEvents, onClos
           content: data.message,
           actions: data.actions?.length ? data.actions : undefined,
         }])
+        // Persist exchange to Supabase for semantic memory (fire-and-forget)
+        Promise.all([
+          saveToMemory(sessionIdRef.current, 'user', text),
+          saveToMemory(sessionIdRef.current, 'assistant', data.message),
+        ]).then(([userId, assistantId]) => {
+          if (userId) embedMessage(userId, text)
+          if (assistantId) embedMessage(assistantId, data.message)
+        }).catch(() => {})
       } else {
         setMessages(m => [...m, {
           role: 'assistant',

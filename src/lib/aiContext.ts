@@ -6,7 +6,8 @@ import {
   parseKanban,
   parseTimeline,
 } from './workflowBlocks'
-import type { WorkflowContext } from './aiTypes'
+import { parseBoardWidget } from './boardWidgets'
+import type { TodoContext, WorkflowContext } from './aiTypes'
 
 type WorkflowBlockType = WorkflowContext['type']
 
@@ -242,4 +243,36 @@ export function buildWorkflowContext(pages: Page[], maxItemsPerBlock = 8): Workf
       items: items.slice(0, maxItemsPerBlock),
     }]
   }))
+}
+
+export function buildTodoContext(pages: Page[], maxItemsPerBoard = 12): TodoContext[] {
+  return pages.flatMap(page => {
+    const items = page.blocks
+      .filter(block => block.type === 'boardWidget')
+      .flatMap(block => {
+        const data = parseBoardWidget(block.content)
+        if (data.type !== 'todoList') return []
+        return data.items ?? []
+      })
+
+    if (!items.length) return []
+
+    const open = items
+      .filter(item => !item.done)
+      .map(item => item.text.trim())
+      .filter(Boolean)
+      .slice(0, maxItemsPerBoard)
+    const done = items
+      .filter(item => item.done)
+      .map(item => item.text.trim())
+      .filter(Boolean)
+      .slice(0, maxItemsPerBoard)
+
+    if (!open.length && !done.length) return []
+    return [{
+      pageTitle: page.title || 'Untitled',
+      open,
+      done,
+    }]
+  })
 }

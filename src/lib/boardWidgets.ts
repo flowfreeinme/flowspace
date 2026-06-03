@@ -30,6 +30,7 @@ export const BOARD_WIDGET_SIZES: Record<BoardWidgetType, { width: number; height
   proPlanner: { width: 360, height: 250 },
   focusTimer: { width: 320, height: 240 },
   weather: { width: 320, height: 235 },
+  aiBriefing: { width: 320, height: 300 },
   todoList: { width: 360, height: 300 },
 }
 

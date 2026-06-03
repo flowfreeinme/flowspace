@@ -22,6 +22,7 @@ import FocusTimerWidget from './widgets/FocusTimerWidget'
 import WeatherWidget from './widgets/WeatherWidget'
 import ProPlannerWidget from './widgets/ProPlannerWidget'
 import CalendarWidget from './widgets/CalendarWidget'
+import AiBriefingWidget from './widgets/AiBriefingWidget'
 import TodaySettings from './widgets/settings/TodaySettings'
 import FocusQueueSettings from './widgets/settings/FocusQueueSettings'
 import RecentWorkSettings from './widgets/settings/RecentWorkSettings'
@@ -48,6 +49,12 @@ type WidgetResizeDrag = {
   startY: number
 }
 
+type WidgetDrag = {
+  widgetId: string
+  startX: number
+  startY: number
+}
+
 function greeting(hour: number) {
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
@@ -61,7 +68,9 @@ export default function HomeScreen() {
     homeCenter,
     addHomeCenterWidget,
     removeHomeCenterWidget,
+    moveHomeCenterWidget,
     resizeHomeCenterWidgetFromCorner,
+    pushCascadeHomeCenterWidgets,
     autoArrangeHomeCenter,
     resetHomeCenter,
   } = useWorkspace()
@@ -73,8 +82,12 @@ export default function HomeScreen() {
   const [openSettingsWidget, setOpenSettingsWidget] = useState<string | null>(null)
   const [activeResizeWidgetId, setActiveResizeWidgetId] = useState<string | null>(null)
   const [widgetResizeDrag, setWidgetResizeDrag] = useState<WidgetResizeDrag | null>(null)
+  const [activeDragWidgetId, setActiveDragWidgetId] = useState<string | null>(null)
+  const [widgetDrag, setWidgetDrag] = useState<WidgetDrag | null>(null)
   const homeGridRef = useRef<HTMLDivElement>(null)
   const resizeDeltaRef = useRef({ x: 0, y: 0 })
+  const dragDeltaRef = useRef({ x: 0, y: 0 })
+  const dragActivatedRef = useRef(false)
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
@@ -84,9 +97,11 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!editingHome || isMobile) {
       setWidgetResizeDrag(null)
+      setWidgetDrag(null)
     }
     if (!editingHome) {
       setActiveResizeWidgetId(null)
+      setActiveDragWidgetId(null)
     }
   }, [editingHome, isMobile])
 
@@ -132,6 +147,62 @@ export default function HomeScreen() {
     }
   }, [isMobile, resizeHomeCenterWidgetFromCorner, widgetResizeDrag])
 
+  useEffect(() => {
+    if (!widgetDrag) return
+    const drag = widgetDrag
+
+    function handlePointerMove(event: PointerEvent) {
+      const grid = homeGridRef.current
+      if (!grid) return
+
+      const rect = grid.getBoundingClientRect()
+      const cellWidth = rect.width / HOME_GRID_COLUMNS
+      const cellHeight = rect.height / HOME_GRID_ROWS
+      if (!cellWidth || !cellHeight) return
+
+      const rawDx = event.clientX - drag.startX
+      const rawDy = event.clientY - drag.startY
+
+      if (!dragActivatedRef.current) {
+        if (Math.abs(rawDx) < 5 && Math.abs(rawDy) < 5) return
+        dragActivatedRef.current = true
+        setActiveDragWidgetId(drag.widgetId)
+      }
+
+      const nextDx = Math.round(rawDx / cellWidth)
+      const nextDy = Math.round(rawDy / cellHeight)
+      const stepDx = nextDx - dragDeltaRef.current.x
+      const stepDy = nextDy - dragDeltaRef.current.y
+
+      if (stepDx || stepDy) {
+        moveHomeCenterWidget(drag.widgetId, stepDx, stepDy)
+        dragDeltaRef.current = { x: nextDx, y: nextDy }
+      }
+    }
+
+    function stopDrag() {
+      if (dragActivatedRef.current) {
+        pushCascadeHomeCenterWidgets(drag.widgetId)
+      }
+      setWidgetDrag(null)
+      setActiveDragWidgetId(null)
+      dragActivatedRef.current = false
+    }
+
+    const previousUserSelect = document.body.style.userSelect
+    document.body.style.userSelect = 'none'
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', stopDrag)
+    window.addEventListener('pointercancel', stopDrag)
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', stopDrag)
+      window.removeEventListener('pointercancel', stopDrag)
+    }
+  }, [moveHomeCenterWidget, pushCascadeHomeCenterWidgets, widgetDrag])
+
   const today = new Date()
   const todayY = today.getFullYear()
   const todayM = today.getMonth()
@@ -171,6 +242,18 @@ export default function HomeScreen() {
     })
   }
 
+  function startWidgetDrag(event: React.PointerEvent<HTMLElement>, widget: HomeWidget) {
+    event.preventDefault()
+    setOpenSettingsWidget(null)
+    dragDeltaRef.current = { x: 0, y: 0 }
+    dragActivatedRef.current = false
+    setWidgetDrag({
+      widgetId: widget.id,
+      startX: event.clientX,
+      startY: event.clientY,
+    })
+  }
+
   function renderSettingsForm(widget: HomeWidget) {
     if (widget.type === 'today') return <TodaySettings config={getWidgetSettings('today', widgetSettings)} />
     if (widget.type === 'focus') return <FocusQueueSettings config={getWidgetSettings('focus', widgetSettings)} />
@@ -180,6 +263,7 @@ export default function HomeScreen() {
     if (widget.type === 'focusTimer') return <FocusTimerSettings config={getWidgetSettings('focusTimer', widgetSettings)} />
     if (widget.type === 'weather') return <WeatherSettings config={getWidgetSettings('weather', widgetSettings)} />
     if (widget.type === 'calendar') return <CalendarSettings config={getWidgetSettings('calendar', widgetSettings)} />
+    if (widget.type === 'aiBriefing') return null
     return null
   }
 
@@ -196,6 +280,7 @@ export default function HomeScreen() {
     if (widget.type === 'quickCapture') return <QuickCaptureWidget config={getWidgetSettings('quickCapture', widgetSettings)} />
     if (widget.type === 'proPlanner') return <ProPlannerWidget config={getWidgetSettings('proPlanner', widgetSettings)} />
     if (widget.type === 'focusTimer') return <FocusTimerWidget config={getWidgetSettings('focusTimer', widgetSettings)} />
+    if (widget.type === 'aiBriefing') return <AiBriefingWidget />
     return <WeatherWidget config={getWidgetSettings('weather', widgetSettings)} />
   }
 
@@ -283,10 +368,12 @@ export default function HomeScreen() {
               widget={widget}
               editingHome={editingHome}
               isResizing={activeResizeWidgetId === widget.id}
+              isDragging={activeDragWidgetId === widget.id}
               openSettings={openSettingsWidget === widget.id}
               onOpenSettings={() => setOpenSettingsWidget(widget.id)}
               onCloseSettings={() => setOpenSettingsWidget(null)}
               onStartResize={(e, corner) => startWidgetResize(e, widget, corner)}
+              onStartDrag={e => startWidgetDrag(e, widget)}
               onRemove={() => removeHomeCenterWidget(widget.id)}
               settingsForm={renderSettingsForm(widget)}
             >

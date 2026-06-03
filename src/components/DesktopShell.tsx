@@ -6,6 +6,7 @@ import BoardView from './BoardView'
 import HomeScreen from './HomeScreen'
 import CommandPalette from './CommandPalette'
 import BoardTemplateModal from './BoardTemplateModal'
+import DatabasePage from './database/DatabasePage'
 
 interface Props {
   paletteOpen: boolean
@@ -26,9 +27,11 @@ export default function DesktopShell({ paletteOpen, onClosePalette, onOpenShortc
           <Sidebar />
         </div>
         {activeTab ? (
-          activePage?.boardMode
-            ? <BoardView key={activeTab.pageId} pageId={activeTab.pageId} />
-            : <PageView key={activeTab.pageId} pageId={activeTab.pageId} />
+          activePage?.database
+            ? <DatabasePage key={activeTab.pageId} pageId={activeTab.pageId} />
+            : activePage?.boardMode
+              ? <BoardView key={activeTab.pageId} pageId={activeTab.pageId} />
+              : <PageView key={activeTab.pageId} pageId={activeTab.pageId} />
         ) : (
           <HomeScreen />
         )}

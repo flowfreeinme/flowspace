@@ -77,4 +77,6 @@ export const DEFAULT_WIDGET_SETTINGS: Record<HomeWidgetType, object> = {
     visibleCalendarIds: [],
     showEventTimes: true,
   } satisfies CalendarConfig,
+
+  aiBriefing: {},
 }

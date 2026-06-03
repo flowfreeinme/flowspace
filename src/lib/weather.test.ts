@@ -71,6 +71,9 @@ describe('weather helpers', () => {
       precipitation: 0,
       high: 78,
       low: 63,
+      uvIndex: 0,
+      sunrise: null,
+      sunset: null,
       condition: getWeatherCondition(3, true),
     })
   })

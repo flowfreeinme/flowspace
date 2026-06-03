@@ -146,3 +146,21 @@ export function routeLocally(raw: string, ctx: BoardContext): RouterResult {
 
   return { handled: false }
 }
+
+const SECOND_BRAIN_PATTERNS: RegExp[] = [
+  /what should i (work on|focus|do|prioritize)/i,
+  /what('s| is) next/i,
+  /\b(what to focus|my focus|my priority)\b/i,
+  /what('s| is) related to/i,
+  /connected to/i,
+  /what did i miss/i,
+  /any action items/i,
+  /extract (tasks|actions|action items)/i,
+  /across (my )?(workspace|pages|notes)/i,
+  /workspace.wide/i,
+  /second brain/i,
+]
+
+export function isSecondBrainQuery(text: string): boolean {
+  return SECOND_BRAIN_PATTERNS.some(p => p.test(text))
+}

@@ -200,6 +200,7 @@ export default function Sidebar() {
     pages,
     createPage,
     createBoard,
+    createDatabase,
     createFolder,
     openTab,
     openTemplatePicker,
@@ -414,6 +415,13 @@ export default function Sidebar() {
                     >
                       <FileText size={13} className="text-gray-500" />
                       Page
+                    </button>
+                    <button
+                      onClick={() => { const id = createDatabase(null); openTab(id); setAddMenuOpen(false) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-gray-300 transition-colors hover:bg-surface-3 hover:text-white"
+                    >
+                      <span className="text-gray-500 text-xs font-mono">⊞</span>
+                      Database
                     </button>
                   </div>
                 )}

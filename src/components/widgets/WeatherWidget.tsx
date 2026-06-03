@@ -119,22 +119,9 @@ export default function WeatherWidget({ config }: { config: WeatherConfig }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-br from-surface-1 via-surface-1 to-sky-500/10 p-3">
-      <div className="flex shrink-0 items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-sky-300">
-          <CloudSun size={13} />
-          Weather
-        </div>
-        <button
-          type="button"
-          data-home-widget-edit-control="true"
-          onClick={detectWeatherLocation}
-          disabled={weatherLocating || weatherLoading}
-          className="flex h-7 items-center gap-1 rounded-lg border border-surface-3 bg-surface-2 px-2 text-[11px] text-gray-400 transition-colors hover:border-sky-400/30 hover:text-sky-200 disabled:opacity-60"
-          title="Use my location"
-        >
-          {weatherLocating ? <Loader2 size={12} className="animate-spin" /> : <LocateFixed size={12} />}
-          Local
-        </button>
+      <div className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-sky-300">
+        <CloudSun size={13} />
+        Weather
       </div>
 
       <div className="my-auto min-h-0 py-2">
@@ -167,7 +154,7 @@ export default function WeatherWidget({ config }: { config: WeatherConfig }) {
               </div>
             </div>
 
-            {(config.showHumidity || config.showWind || config.showPrecipitation) && (
+            {(config.showHumidity || config.showWind || config.showPrecipitation || config.showUvIndex || config.showSunriseSunset) && (
               <div className="mt-3 grid grid-cols-3 gap-1.5">
                 {config.showHumidity && (
                   <div className="rounded-lg border border-surface-3 bg-surface-2 px-2 py-1.5">
@@ -193,6 +180,18 @@ export default function WeatherWidget({ config }: { config: WeatherConfig }) {
                     <p className="text-xs font-semibold text-gray-200">{weather.precipitation}"</p>
                   </div>
                 )}
+                {config.showUvIndex && (
+                  <div className="rounded-lg border border-surface-3 bg-surface-2 px-2 py-1.5">
+                    <div className="mb-1 text-[10px] uppercase tracking-wider text-gray-600">UV</div>
+                    <p className="text-xs font-semibold text-gray-200">{weather.uvIndex}</p>
+                  </div>
+                )}
+                {config.showSunriseSunset && weather.sunrise && (
+                  <div className="col-span-2 rounded-lg border border-surface-3 bg-surface-2 px-2 py-1.5">
+                    <div className="mb-1 text-[10px] uppercase tracking-wider text-gray-600">Sun</div>
+                    <p className="text-xs font-semibold text-gray-200">↑ {weather.sunrise} · ↓ {weather.sunset}</p>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -213,6 +212,16 @@ export default function WeatherWidget({ config }: { config: WeatherConfig }) {
           className="min-w-0 flex-1 rounded-lg border border-surface-3 bg-surface-2 px-2 py-1.5 text-xs text-white outline-none transition-colors placeholder:text-gray-600 focus:border-sky-400/40"
           aria-label="Weather location"
         />
+        <button
+          type="button"
+          data-home-widget-edit-control="true"
+          onClick={detectWeatherLocation}
+          disabled={weatherLocating || weatherLoading}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-surface-3 bg-surface-2 text-gray-400 transition-colors hover:border-sky-400/30 hover:text-sky-200 disabled:opacity-60"
+          title="Use my location"
+        >
+          {weatherLocating ? <Loader2 size={13} className="animate-spin" /> : <LocateFixed size={13} />}
+        </button>
         <button
           type="submit"
           disabled={weatherLoading}

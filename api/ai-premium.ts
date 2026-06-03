@@ -57,9 +57,24 @@ function buildSystemPrompt(ctx: any): string {
         .join('\n')}`
     )
   }
+  if (ctx?.todos?.length) {
+    parts.push(
+      `\nBoard to-do widgets:\n${ctx.todos
+        .map((todo: any) => {
+          const open = (todo.open || []).map((item: string) => `  - [ ] ${item}`).join('\n')
+          const done = (todo.done || []).map((item: string) => `  - [x] ${item}`).join('\n')
+          return `- ${todo.pageTitle || 'Untitled'}:\n${[open, done].filter(Boolean).join('\n')}`
+        })
+        .join('\n')}`
+    )
+  }
 
   parts.push(`Answer the user's question thoroughly. Use web search when current or factual information would help.
-When planning days or task systems, use calendar event times/locations, timeline dated items, kanban status, and flowchart order together.
+Ground answers in the provided workspace context before inventing new tasks.
+Prioritize unchecked board to-do widget tasks over completed tasks or brand-new suggestions.
+When useful, mention the exact board/page that contains a task.
+If the request is ambiguous but enough context exists, make a practical assumption and proceed.
+When planning days or task systems, use calendar event times/locations, unchecked to-do widget tasks, timeline dated items, kanban status, and flowchart order together.
 When the user requests a calendar range, use every listed calendar event in earliest-to-latest order.
 Respond in plain, readable text. Be direct and useful.`)
 

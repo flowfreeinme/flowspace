@@ -14,9 +14,9 @@ const HOW_IT_WORKS = [
   },
   {
     step: '02',
-    icon: '⚡',
-    title: 'Invite your team',
-    desc: 'Share a board by email in one click. Changes appear live for everyone — no refresh, no sync button.',
+    icon: '📋',
+    title: 'Start from a template',
+    desc: 'Pick a ready-made template — Sprint, Project Plan, Daily Planner, and more — or drop a Kanban, Flowchart, or Timeline block right onto any canvas.',
   },
   {
     step: '03',
@@ -44,18 +44,18 @@ const SECONDARY_FEATURES = [
   },
   {
     icon: '🎛️',
-    title: 'Customizable home dashboard',
-    desc: 'Eight built-in widgets — Today, Calendar, Weather, Focus Queue, and more — each with its own settings. Tune titles, filters, presets, and display options to match how you work.',
+    title: 'Drag-and-arrange dashboard',
+    desc: 'Eight built-in widgets — resize from any corner and drag to rearrange. Each has its own settings: titles, filters, timer presets, and more.',
   },
   {
-    icon: '🔔',
-    title: 'Live notifications',
-    desc: 'Invites, access changes, and board activity appear in your bell the moment they happen.',
+    icon: '🔀',
+    title: 'Workflow blocks',
+    desc: 'Kanban, Flowchart, and Timeline as resizable canvas blocks inside any board. Drag cards, connect nodes, or track milestones — no separate app needed.',
   },
   {
-    icon: '🔒',
-    title: 'Two-factor authentication',
-    desc: 'Add an extra layer of security to your account. Enable 2FA from account settings in seconds.',
+    icon: '🚀',
+    title: 'Board templates',
+    desc: 'Start from a Sprint, Roadmap, Daily Planner, or Brainstorm template. One click from the sidebar, command palette, or new board screen.',
   },
 ]
 
@@ -63,12 +63,13 @@ const CORE_FEATURES = [
   'Unlimited boards, cards & sections',
   'Real-time collaboration & presence',
   'Built-in calendar (Google + ICS)',
+  'Workflow blocks: Kanban, Flowchart, Timeline',
+  'Board templates — start in one click',
   'Folders, favorites, recent boards & search',
   'Freehand drawing & file attachments',
-  'Customizable home dashboard (8 widget types)',
+  'Drag-and-arrange home dashboard (8 widgets)',
   'Focus timer with custom presets',
   'Invite & access control',
-  'Live notifications',
   'Mobile-ready — works on any device',
 ]
 
@@ -84,11 +85,15 @@ const PRO_FEATURES = [
 const FAQ = [
   {
     q: 'What is FlowSpace?',
-    a: 'FlowSpace is a visual workspace built around boards, cards, and real-time collaboration. It combines a freeform canvas, a built-in calendar, drawing tools, file attachments, and an AI assistant — all in one place.',
+    a: 'FlowSpace is a visual workspace built around boards, cards, and real-time collaboration. It combines a freeform canvas, built-in workflow blocks (Kanban, Flowchart, Timeline), a calendar, drawing tools, file attachments, and an AI assistant — all in one place.',
+  },
+  {
+    q: 'What are workflow blocks?',
+    a: 'Workflow blocks are Kanban boards, Flowcharts, and Timeline views you can embed directly on any board canvas as resizable blocks. Drop one anywhere, drag cards between columns, connect nodes, or track milestones — without switching to a separate app.',
   },
   {
     q: 'Can FlowSpace replace my current task and project tools?',
-    a: 'For most workflows, yes. Boards handle project tracking and daily tasks. The built-in calendar covers scheduling and deadlines. File attachments mean you never need to context-switch to find a document. And real-time collaboration replaces the need for separate team tools.',
+    a: 'For most workflows, yes. Boards handle project tracking and daily tasks. Kanban and timeline blocks cover structured project views. The built-in calendar handles scheduling. File attachments mean no context-switching for documents. And real-time collaboration replaces separate team tools.',
   },
   {
     q: 'How does the AI assistant work?',
@@ -100,7 +105,7 @@ const FAQ = [
   },
   {
     q: 'Can I customize the home dashboard?',
-    a: 'Yes — every widget has its own settings. Click the gear icon on any widget to change its title, adjust filters, set your work hours, build custom focus timer presets, choose temperature units, and more. Settings save automatically alongside your layout.',
+    a: 'Yes — every widget is resizable from any corner and draggable to any position on the grid. Click the gear icon on any widget to change its title, adjust filters, set work hours, build custom focus timer presets, choose temperature units, and more.',
   },
   {
     q: 'Does it work on mobile?',
@@ -195,15 +200,15 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* Hero */}
       <section className="text-center px-6 pt-20 pb-24 max-w-4xl mx-auto">
         <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 text-accent text-xs font-medium px-3 py-1.5 rounded-full mb-10">
-          ✦ Boards · Calendar · Widgets · AI
+          ✦ Boards · Kanban · Calendar · AI
         </div>
         <h1 className="text-5xl sm:text-6xl font-bold text-white leading-[1.08] mb-6 tracking-tight">
           One workspace.<br />
           <span className="text-accent">Everything in it.</span>
         </h1>
         <p className="text-gray-400 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-          Stop stitching tools together. FlowSpace brings boards, calendar,
-          files, focus tools, drawing, and AI into a single place that actually works.
+          Boards, Kanban, Flowchart, Timeline, calendar, and AI — all in one place.
+          Start from a template or build from scratch. No app switching.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
           <button
@@ -221,7 +226,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
         {/* Quick perks */}
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          {['Unlimited boards & cards', 'Real-time collaboration', 'Built-in calendar', 'Works on any device'].map(p => (
+          {['Unlimited boards & cards', 'Kanban, Flowchart & Timeline', 'Built-in calendar', 'Board templates'].map(p => (
             <span key={p} className="flex items-center gap-1.5 text-xs text-gray-500">
               <Check size={11} className="text-accent shrink-0" />
               {p}
@@ -451,6 +456,89 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         />
 
         <FeatureCallout
+          icon="📋"
+          title="Kanban, Flowchart, and Timeline — inside your board"
+          body="Drop a workflow block anywhere on the canvas. Drag cards between Kanban columns, draw connections in a Flowchart, or track milestones on a Timeline — all without leaving the board you're already in."
+          flip
+          mockup={
+            <div className="p-5 h-52 relative overflow-hidden bg-surface-0/40">
+              {/* Kanban block frame */}
+              <div className="absolute inset-4 bg-surface-1 border border-accent/30 rounded-xl overflow-hidden shadow-lg">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-surface-3 bg-surface-2/60">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Kanban block</span>
+                  <div className="flex gap-1">
+                    {['bg-accent/40', 'bg-surface-4', 'bg-surface-4'].map((c, i) => (
+                      <div key={i} className={`text-[7px] px-1.5 py-0.5 rounded ${i === 0 ? 'bg-accent/20 text-accent' : 'bg-surface-3 text-gray-600'}`}>
+                        {['Kanban', 'Flow', 'Timeline'][i]}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2.5 p-3">
+                  {[
+                    { label: 'Todo', cards: [72, 60], color: 'border-surface-3' },
+                    { label: 'In Progress', cards: [80], color: 'border-accent/40' },
+                    { label: 'Done', cards: [64, 48], color: 'border-surface-3', dim: true },
+                  ].map((col, ci) => (
+                    <div key={ci} className="flex-1 min-w-0">
+                      <div className="text-[7px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">{col.label}</div>
+                      <div className="space-y-1.5">
+                        {col.cards.map((w, i) => (
+                          <div key={i} className={`bg-surface-2 border ${col.color} rounded-lg p-1.5 ${col.dim ? 'opacity-40' : ''}`}>
+                            <div className="h-1 bg-surface-4 rounded mb-1" style={{ width: w * 0.8 }} />
+                            <div className="h-1 bg-surface-4 rounded opacity-60" style={{ width: w * 0.5 }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Resize handle hint */}
+              <div className="absolute bottom-5 right-5 w-3 h-3 bg-accent rounded-sm border border-surface-0 shadow-md" />
+            </div>
+          }
+        />
+
+        <FeatureCallout
+          icon="🚀"
+          title="Go from blank to organized in one click"
+          body="Pick a ready-made template — Sprint Planning, Project Roadmap, Daily Planner, Brainstorm Board, and more. It lands in your workspace fully structured, ready to customize. Accessible from the sidebar, command palette (⌘K), or the new board screen."
+          mockup={
+            <div className="p-5 h-52 relative overflow-hidden bg-surface-0/40">
+              {/* Template picker */}
+              <div className="absolute inset-3 bg-surface-1 border border-surface-3 rounded-xl overflow-hidden shadow-xl">
+                <div className="px-4 py-3 border-b border-surface-3 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold text-white">Choose a template</span>
+                  <div className="w-16 h-3 bg-surface-3 rounded-full" />
+                </div>
+                <div className="grid grid-cols-3 gap-2 p-3">
+                  {[
+                    { label: '🚀 Sprint', accent: true },
+                    { label: '🗺️ Roadmap', accent: false },
+                    { label: '📅 Daily', accent: false },
+                    { label: '💡 Brainstorm', accent: false },
+                    { label: '✅ Tasks', accent: false },
+                    { label: '📊 Review', accent: false },
+                  ].map((t, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-lg p-2 border ${t.accent ? 'border-accent/50 bg-accent/10' : 'border-surface-3 bg-surface-2'}`}
+                    >
+                      <div className="text-[8px] font-medium text-gray-400 leading-tight">{t.label}</div>
+                      <div className="mt-1.5 space-y-1">
+                        <div className={`h-1 rounded ${t.accent ? 'bg-accent/40' : 'bg-surface-4'}`} style={{ width: '80%' }} />
+                        <div className="h-1 bg-surface-4 rounded opacity-50" style={{ width: '60%' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          }
+        />
+
+        <FeatureCallout
           icon="⚡"
           title="Your team, in the same room"
           body="Share any board and edit it together live. Presence avatars show who's active. Changes appear the moment they happen — no 'did you see my update?' messages."
@@ -513,24 +601,23 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <FeatureCallout
           icon="🎛️"
           title="A home screen built around your day"
-          body="Eight widgets — Today, Focus Queue, Recent Work, Calendar, Weather, Quick Capture, Focus Timer, and AI Day Planner. Each one has its own settings: change titles, adjust filters, set work hours, build custom timer presets. Gear icon on hover, no digging through menus."
+          body="Eight widgets — Today, Focus Queue, Recent Work, Calendar, Weather, Quick Capture, Focus Timer, and AI Day Planner. Drag to rearrange, resize from any corner, and tweak each widget's settings independently. Your layout saves automatically."
           flip
           mockup={
             <div className="p-5 h-52 relative overflow-hidden bg-surface-0/40">
               <div className="grid grid-cols-2 gap-2 h-full">
                 {/* Today widget */}
-                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative">
+                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative cursor-grab">
                   <div className="text-[8px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Today</div>
                   <div className="h-2 w-24 bg-accent/30 rounded mb-1.5" />
                   <div className="h-1.5 w-16 bg-surface-4 rounded mb-1 opacity-60" />
                   <div className="h-1.5 w-20 bg-surface-4 rounded opacity-40" />
-                  {/* gear icon hint */}
                   <div className="absolute top-2 right-2 w-4 h-4 rounded bg-surface-3 flex items-center justify-center opacity-60">
                     <span className="text-[8px] text-gray-400">⚙</span>
                   </div>
                 </div>
                 {/* Focus Queue widget */}
-                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative">
+                <div className="bg-surface-2 border border-accent/30 rounded-xl p-3 relative" style={{ transform: 'translate(4px,-4px)', boxShadow: '0 8px 20px rgba(124,106,247,0.25)' }}>
                   <div className="text-[8px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Focus Queue</div>
                   {[28, 22, 18].map((w, i) => (
                     <div key={i} className="flex items-center gap-1.5 mb-1.5">
@@ -541,20 +628,20 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   <div className="absolute top-2 right-2 w-4 h-4 rounded bg-surface-3 flex items-center justify-center opacity-60">
                     <span className="text-[8px] text-gray-400">⚙</span>
                   </div>
+                  {/* drag hint */}
+                  <div className="absolute bottom-2 left-2 text-[7px] text-accent/50">drag to move</div>
                 </div>
                 {/* Weather widget */}
-                <div className="bg-surface-2 border border-accent/25 rounded-xl p-3 relative">
+                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative cursor-grab">
                   <div className="text-[8px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Weather</div>
                   <div className="text-lg font-bold text-white leading-none mb-1">72°</div>
                   <div className="h-1.5 w-14 bg-surface-4 rounded opacity-40" />
-                  {/* open settings popover hint */}
-                  <div className="absolute top-2 right-2 bg-surface-1 border border-accent/30 rounded-lg px-2 py-1.5 shadow-lg">
-                    <div className="h-1 w-10 bg-surface-4 rounded mb-1" />
-                    <div className="h-1 w-8 bg-surface-4 rounded opacity-60" />
+                  <div className="absolute top-2 right-2 w-4 h-4 rounded bg-surface-3 flex items-center justify-center opacity-60">
+                    <span className="text-[8px] text-gray-400">⚙</span>
                   </div>
                 </div>
                 {/* Focus Timer widget */}
-                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative">
+                <div className="bg-surface-2 border border-surface-3 rounded-xl p-3 relative cursor-grab">
                   <div className="text-[8px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Focus Timer</div>
                   <div className="flex gap-1 mb-2">
                     {['25m', '50m', '90m'].map((p, i) => (
@@ -567,6 +654,8 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   </div>
                 </div>
               </div>
+              {/* resize handle hint */}
+              <div className="absolute bottom-2 right-2 w-3 h-3 bg-accent rounded-sm border border-surface-0 shadow-md" />
             </div>
           }
         />
@@ -714,9 +803,9 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               </p>
               <ul className="space-y-3">
                 {[
-                  '✦ Boards, calendar, files, and AI — all in one place.',
-                  '✦ Customizable home dashboard with 8 configurable widgets.',
-                  '✦ Real-time collaboration from day one.',
+                  '✦ Boards, Kanban, Flowchart, Timeline, and AI — all in one place.',
+                  '✦ Start from a template or a blank canvas in seconds.',
+                  '✦ Drag-and-arrange home dashboard with 8 configurable widgets.',
                 ].map(line => (
                   <li key={line} className="text-sm text-gray-300">{line}</li>
                 ))}

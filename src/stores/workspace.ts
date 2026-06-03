@@ -19,6 +19,7 @@ import {
   removeHomeWidget,
   resizeHomeWidget,
   resizeHomeWidgetFromCorner,
+  pushCascadeHomeWidgets,
   type HomeWidgetResizeCorner,
 } from '@/lib/homeCenter'
 
@@ -37,6 +38,7 @@ interface WorkspaceStore extends WorkspaceData {
   // Pages
   createPage: (parentId?: string | null) => string
   createBoard: (parentId?: string | null) => string
+  createDatabase: (parentId?: string | null) => string
   createFolder: (parentId?: string | null) => string
   updatePageTitle: (id: string, title: string) => void
   updatePageIcon: (id: string, icon: string) => void
@@ -67,6 +69,7 @@ interface WorkspaceStore extends WorkspaceData {
   resizeHomeCenterWidgetFromCorner: (id: string, corner: HomeWidgetResizeCorner, dx: number, dy: number) => void
   autoArrangeHomeCenter: () => void
   resetHomeCenter: () => void
+  pushCascadeHomeCenterWidgets: (id: string) => void
   updateWidgetSettings: <K extends HomeWidgetType>(type: K, patch: Partial<WidgetConfigMap[K]>) => void
   openTemplatePicker: (parentId?: string | null) => void
   closeTemplatePicker: () => void
@@ -235,6 +238,35 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
       }
       return { pages, rootPages }
     })
+    get().persist()
+    return id
+  },
+
+  createDatabase(parentId = null) {
+    const { pages, rootPages } = get()
+    const id = uuid()
+    const now = Date.now()
+    const page: Page = {
+      id,
+      title: 'Untitled Database',
+      icon: '⊞',
+      blocks: [],
+      children: [],
+      parentId: parentId ?? null,
+      createdAt: now,
+      updatedAt: now,
+      boardMode: false,
+      database: true,
+    }
+    const newPages = { ...pages, [id]: page }
+    const newRoot = parentId ? rootPages : [...rootPages, id]
+    if (parentId && newPages[parentId]) {
+      newPages[parentId] = {
+        ...newPages[parentId],
+        children: [...newPages[parentId].children, id],
+      }
+    }
+    set({ pages: newPages, rootPages: newRoot })
     get().persist()
     return id
   },
@@ -571,6 +603,16 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
 
   resetHomeCenter() {
     set({ homeCenter: { widgets: DEFAULT_HOME_WIDGETS } })
+    get().persist()
+  },
+
+  pushCascadeHomeCenterWidgets(id) {
+    set(s => ({
+      homeCenter: {
+        ...s.homeCenter,
+        widgets: pushCascadeHomeWidgets(s.homeCenter?.widgets ?? DEFAULT_HOME_WIDGETS, id),
+      },
+    }))
     get().persist()
   },
 
