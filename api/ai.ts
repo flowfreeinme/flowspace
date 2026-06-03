@@ -1,9 +1,21 @@
 // api/ai.ts
 import Groq from 'groq-sdk'
 import { createClient } from '@supabase/supabase-js'
-import { getEmbedding } from './_embed'
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const HF_URL = 'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2'
+async function getEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.HUGGINGFACE_API_KEY
+  if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not set')
+  const res = await fetch(HF_URL, {
+    method: 'POST', signal: AbortSignal.timeout(8_000),
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
+  })
+  if (!res.ok) throw new Error(`HuggingFace error ${res.status}: ${await res.text()}`)
+  const data: number[] | number[][] = await res.json()
+  if (Array.isArray(data) && typeof data[0] === 'number') return data as number[]
+  if (Array.isArray(data) && Array.isArray(data[0])) return data[0] as number[]
+  throw new Error('Unexpected embedding shape')
+}
 
 function buildSystemPrompt(ctx: any, pastContext = ''): string {
   const parts: string[] = []
@@ -152,7 +164,9 @@ export default async function handler(req: any, res: any) {
 
   const { messages, workspaceContext, sessionId } = req.body ?? {}
   if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Missing messages' })
-  if (!process.env.GROQ_API_KEY) return res.status(500).json({ error: 'AI service not configured.' })
+  const groqApiKey = process.env.GROQ_API_KEY
+  if (!groqApiKey) return res.status(500).json({ error: 'AI service not configured.' })
+  const groq = new Groq({ apiKey: groqApiKey })
 
   let pastContext = ''
   try {

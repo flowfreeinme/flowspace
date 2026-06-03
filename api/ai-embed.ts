@@ -1,6 +1,20 @@
 // api/ai-embed.ts
 import { createClient } from '@supabase/supabase-js'
-import { getEmbedding } from './_embed'
+const HF_URL = 'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2'
+async function getEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.HUGGINGFACE_API_KEY
+  if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not set')
+  const res = await fetch(HF_URL, {
+    method: 'POST', signal: AbortSignal.timeout(8_000),
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
+  })
+  if (!res.ok) throw new Error(`HuggingFace error ${res.status}: ${await res.text()}`)
+  const data: number[] | number[][] = await res.json()
+  if (Array.isArray(data) && typeof data[0] === 'number') return data as number[]
+  if (Array.isArray(data) && Array.isArray(data[0])) return data[0] as number[]
+  throw new Error('Unexpected embedding shape')
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
