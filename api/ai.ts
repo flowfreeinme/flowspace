@@ -106,7 +106,8 @@ Available action types:
 
 Rules:
 - Output JSON only. Nothing else.
-- Always include "message". Keep it to 1–2 sentences confirming what was done — never preview what you're about to do.
+- Always include "message". Keep action confirmations to 1–2 sentences — never preview what you're about to do.
+- For day planner, schedule, or detailed planning requests, the "message" may be a structured multi-section plan instead of 1–2 sentences; keep actions as [] unless the user explicitly asks to create board items.
 - For board reformats: clear_board first, then all sections, then all cards. Never skip sections a user would expect.
 - Invent clear, generic section and card titles that fit the request. Do not try to match existing section names unless the user explicitly asks.
 - Keep card text under 15 words.

@@ -25,7 +25,7 @@ export interface FlowchartNode {
   x: number; y: number
 }
 
-export interface FlowchartEdge {
+interface FlowchartEdge {
   from: string; to: string; label?: string
 }
 
@@ -47,7 +47,7 @@ export interface TimelineBar {
   notes?: string
 }
 
-export interface TimelineGroup {
+interface TimelineGroup {
   id: string; label: string; bars: TimelineBar[]
 }
 
@@ -137,7 +137,7 @@ function defaultFlowchartNodeLabel(type: FlowchartNode['type']) {
   return 'Step'
 }
 
-export function clampFlowchartNodePosition(
+function clampFlowchartNodePosition(
   x: number,
   y: number,
   bounds: FlowchartBounds,
@@ -150,7 +150,7 @@ export function clampFlowchartNodePosition(
   }
 }
 
-export function nextFlowchartNodePosition(
+function nextFlowchartNodePosition(
   data: FlowchartData,
   bounds: FlowchartBounds = data,
 ) {

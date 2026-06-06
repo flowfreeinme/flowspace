@@ -14,7 +14,7 @@ export interface ShareInvite {
   sharedAt: string
 }
 
-export interface OwnerNotif {
+interface OwnerNotif {
   id: string
   type: string
   title: string

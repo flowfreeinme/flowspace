@@ -56,7 +56,7 @@ export type HomeWidgetType =
   | 'today'
   | 'focus'
   | 'recent'
-  | 'quickCapture'
+  | 'todoList'
   | 'proPlanner'
   | 'focusTimer'
   | 'weather'
@@ -71,7 +71,7 @@ export interface HomeWidget {
   h: number
 }
 
-export interface HomeCenterConfig {
+interface HomeCenterConfig {
   widgets: HomeWidget[]
   widgetSettings?: Partial<WidgetConfigMap>
 }

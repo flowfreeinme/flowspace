@@ -1,7 +1,7 @@
 import type { WorkspaceData } from '@/types'
 
-export const WORKSPACE_SPLIT_RECOMMENDED_BYTES = 750 * 1024
-export const WORKSPACE_SPLIT_RECOMMENDED_BOARDS = 100
+const WORKSPACE_SPLIT_RECOMMENDED_BYTES = 750 * 1024
+const WORKSPACE_SPLIT_RECOMMENDED_BOARDS = 100
 
 export function getWorkspaceMetrics(workspace: WorkspaceData) {
   const pages = Object.values(workspace.pages)

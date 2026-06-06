@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { pingInvite, pingNotif } from '@/lib/appChannel'
 import type { Page } from '@/types'
 
-export interface SharedPage {
+interface SharedPage {
   shareId: string
   pageId: string
   title: string

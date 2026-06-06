@@ -4,8 +4,8 @@ import { DEFAULT_WIDGET_SETTINGS } from './widgetDefaults'
 
 export const HOME_GRID_COLUMNS = 12
 export const HOME_GRID_ROWS = 20
-export const MIN_HOME_WIDGET_WIDTH = 4
-export const MIN_HOME_WIDGET_HEIGHT = 3
+const MIN_HOME_WIDGET_WIDTH = 4
+const MIN_HOME_WIDGET_HEIGHT = 3
 
 export type HomeWidgetResizeCorner = 'nw' | 'ne' | 'sw' | 'se'
 
@@ -18,12 +18,15 @@ const WIDGET_DEFAULTS: Record<HomeWidgetType, HomeWidget> = {
   today: { id: 'today', type: 'today', x: 8, y: 0, w: 4, h: 3 },
   focus: { id: 'focus', type: 'focus', x: 8, y: 3, w: 4, h: 4 },
   recent: { id: 'recent', type: 'recent', x: 8, y: 7, w: 4, h: 3 },
-  quickCapture: { id: 'quickCapture', type: 'quickCapture', x: 8, y: 10, w: 4, h: 2 },
+  todoList: { id: 'todoList', type: 'todoList', x: 8, y: 10, w: 4, h: 4 },
   proPlanner: { id: 'proPlanner', type: 'proPlanner', x: 0, y: 9, w: 4, h: 3 },
   focusTimer: { id: 'focusTimer', type: 'focusTimer', x: 8, y: 0, w: 4, h: 4 },
   weather: { id: 'weather', type: 'weather', x: 8, y: 4, w: 4, h: 4 },
   aiBriefing: { id: 'aiBriefing', type: 'aiBriefing', x: 4, y: 0, w: 4, h: 5 },
 }
+
+const HOME_WIDGET_TYPES = Object.keys(WIDGET_DEFAULTS) as HomeWidgetType[]
+type PersistedHomeWidget = Omit<HomeWidget, 'type'> & { type: HomeWidgetType | 'quickCapture' }
 
 const AUTO_ARRANGE_ORDER: HomeWidgetType[] = [
   'calendar',
@@ -32,7 +35,7 @@ const AUTO_ARRANGE_ORDER: HomeWidgetType[] = [
   'focusTimer',
   'focus',
   'recent',
-  'quickCapture',
+  'todoList',
   'proPlanner',
   'aiBriefing',
 ]
@@ -44,7 +47,7 @@ const AUTO_ARRANGE_SIZES: Record<HomeWidgetType, Pick<HomeWidget, 'w' | 'h'>> = 
   focusTimer: { w: 4, h: 3 },
   focus: { w: 4, h: 4 },
   recent: { w: 4, h: 4 },
-  quickCapture: { w: 4, h: 3 },
+  todoList: { w: 4, h: 4 },
   proPlanner: { w: 8, h: 4 },
   aiBriefing: { w: 4, h: 5 },
 }
@@ -57,7 +60,7 @@ export const HOME_WIDGET_CATALOG: Array<{
   { type: 'today', title: 'Today strip', description: 'Current day, time, and your next event.' },
   { type: 'focus', title: 'Focus queue', description: 'Suggested boards and pages to keep moving.' },
   { type: 'recent', title: 'Recent work', description: 'Fast access to recently updated work.' },
-  { type: 'quickCapture', title: 'Quick capture', description: 'Create a board, page, note, or event.' },
+  { type: 'todoList', title: 'To-do list', description: 'Edit tasks and check them off from your home center.' },
   { type: 'proPlanner', title: 'AI day planner', description: 'Generate a quick plan from calendar and workspace context.' },
   { type: 'focusTimer', title: 'Max focus timer', description: 'Run deep-work sprints from your home center.' },
   { type: 'weather', title: 'Weather', description: 'Show local conditions or pin any city.' },
@@ -104,14 +107,54 @@ function findOpenWidgetSlot(widgets: HomeWidget[], template: HomeWidget) {
   return clampWidget({ ...candidate, x: 0, y: HOME_GRID_ROWS - candidate.h })
 }
 
-export function normalizeHomeWidgets(widgets?: HomeWidget[]) {
+function findNearestOpenWidgetSlot(widgets: HomeWidget[], template: HomeWidget) {
+  const candidate = clampWidget(template)
+  if (!widgets.some(widget => overlaps(widget, candidate))) return candidate
+
+  let best: HomeWidget | null = null
+  let bestScore = Number.POSITIVE_INFINITY
+  for (let y = 0; y <= HOME_GRID_ROWS - candidate.h; y++) {
+    for (let x = 0; x <= HOME_GRID_COLUMNS - candidate.w; x++) {
+      const next = { ...candidate, x, y }
+      if (widgets.some(widget => overlaps(widget, next))) continue
+      const score = Math.abs(y - candidate.y) * HOME_GRID_COLUMNS + Math.abs(x - candidate.x)
+      if (score < bestScore) {
+        best = next
+        bestScore = score
+      }
+    }
+  }
+
+  return best
+}
+
+function normalizeWidgetType(type: unknown): HomeWidgetType | null {
+  if (type === 'quickCapture') return 'todoList'
+  if (HOME_WIDGET_TYPES.includes(type as HomeWidgetType)) return type as HomeWidgetType
+  return null
+}
+
+function normalizeHomeWidget(widget: PersistedHomeWidget): HomeWidget | null {
+  const type = normalizeWidgetType(widget.type)
+  if (!type) return null
+  const defaults = WIDGET_DEFAULTS[type]
+  return clampWidget({
+    ...widget,
+    id: type,
+    type,
+    h: type === 'todoList' ? Math.max(widget.h, defaults.h) : widget.h,
+  })
+}
+
+export function normalizeHomeWidgets(widgets?: PersistedHomeWidget[]) {
   if (!widgets?.length) return DEFAULT_HOME_WIDGETS
 
   const seen = new Set<HomeWidgetType>()
   const normalized = widgets.flatMap(widget => {
-    if (seen.has(widget.type)) return []
-    seen.add(widget.type)
-    return clampWidget({ ...widget, id: widget.type })
+    const normalizedWidget = normalizeHomeWidget(widget)
+    if (!normalizedWidget || seen.has(normalizedWidget.type)) return []
+    seen.add(normalizedWidget.type)
+    return normalizedWidget
   })
 
   if (!seen.has('calendar')) return DEFAULT_HOME_WIDGETS
@@ -136,14 +179,18 @@ export function addHomeWidget(widgets: HomeWidget[], type: HomeWidgetType) {
   return normalizeHomeWidgets([...adjusted, findOpenWidgetSlot(adjusted, WIDGET_DEFAULTS[type])])
 }
 
-export function mergeHomeWidgets(current: HomeWidget[], incoming: HomeWidget[]) {
+export function mergeHomeWidgets(current: PersistedHomeWidget[], incoming: PersistedHomeWidget[]) {
   const normalizedCurrent = normalizeHomeWidgets(current)
   if (!incoming.length) return normalizedCurrent
 
-  const hasNewSideWidget = incoming.some(widget => widget.type !== 'calendar' && !normalizedCurrent.some(currentWidget => currentWidget.type === widget.type))
+  const normalizedIncoming = incoming.flatMap(widget => {
+    const normalizedWidget = normalizeHomeWidget(widget)
+    return normalizedWidget ? [normalizedWidget] : []
+  })
+  const hasNewSideWidget = normalizedIncoming.some(widget => widget.type !== 'calendar' && !normalizedCurrent.some(currentWidget => currentWidget.type === widget.type))
   const adjustedCurrent = hasNewSideWidget ? makeRoomForSideRail(normalizedCurrent) : normalizedCurrent
   const existingTypes = new Set(adjustedCurrent.map(widget => widget.type))
-  const missingIncoming = incoming.filter(widget => !existingTypes.has(widget.type))
+  const missingIncoming = normalizedIncoming.filter(widget => !existingTypes.has(widget.type))
 
   return normalizeHomeWidgets([...adjustedCurrent, ...missingIncoming])
 }
@@ -208,9 +255,17 @@ export function pushCascadeHomeWidgets(widgets: HomeWidget[], movedId: string): 
       if (!blockers.length) continue
       const requiredY = Math.max(...blockers.map(w => w.y + w.h))
       if (widget.y < requiredY) {
-        const clamped = clamp(requiredY, 0, HOME_GRID_ROWS - widget.h)
-        result = result.map(w => w.id === widget.id ? { ...w, y: clamped } : w)
-        changed = true
+        const clampedY = clamp(requiredY, 0, HOME_GRID_ROWS - widget.h)
+        const others = result.filter(w => w.id !== widget.id)
+        const below = clampWidget({ ...widget, y: clampedY })
+        const next = !others.some(w => overlaps(w, below))
+          ? below
+          : findNearestOpenWidgetSlot(others, below)
+
+        if (next && (next.x !== widget.x || next.y !== widget.y)) {
+          result = result.map(w => w.id === widget.id ? next : w)
+          changed = true
+        }
       }
     }
   }

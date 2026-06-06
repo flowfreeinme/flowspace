@@ -1,6 +1,6 @@
 import type { WorkspaceSortMode } from './boardOrganization'
 
-export const WORKSPACE_SORT_STORAGE_KEY = 'flowspace_workspace_sort_mode'
+const WORKSPACE_SORT_STORAGE_KEY = 'flowspace_workspace_sort_mode'
 export const WORKSPACE_SORT_CHANGED_EVENT = 'flowspace:workspace-sort-changed'
 
 export const WORKSPACE_SORT_OPTIONS: { mode: WorkspaceSortMode; label: string; title: string }[] = [

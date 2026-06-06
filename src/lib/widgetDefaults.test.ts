@@ -27,4 +27,18 @@ describe('getWidgetSettings', () => {
     const result = getWidgetSettings('today', { today: full })
     expect(result.greeting).toBe('Yo')
   })
+
+  it('returns editable to-do list defaults', () => {
+    const result = getWidgetSettings('todoList' as never, undefined) as {
+      title: string
+      items: Array<{ text: string; done: boolean }>
+    }
+
+    expect(result).toMatchObject({
+      title: 'To-do list',
+      items: expect.arrayContaining([
+        expect.objectContaining({ text: 'Add your first task', done: false }),
+      ]),
+    })
+  })
 })

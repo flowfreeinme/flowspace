@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { STARTER_TEMPLATES } from './starterTemplates'
+import { HOME_GRID_COLUMNS, HOME_GRID_ROWS } from './homeCenter'
 
 const VALID_BLOCK_TYPES = ['textbox', 'section', 'text', 'heading1', 'heading2', 'heading3',
   'todo', 'bullet', 'numbered', 'code', 'divider', 'quote', 'file', 'image', 'kanban', 'flowchart', 'timeline']
-const VALID_WIDGET_TYPES = ['calendar', 'today', 'focus', 'recent', 'quickCapture', 'proPlanner', 'focusTimer', 'weather']
-const HOME_COLS = 12
-const HOME_ROWS = 12
+const VALID_WIDGET_TYPES = ['calendar', 'today', 'focus', 'recent', 'todoList', 'proPlanner', 'focusTimer', 'weather']
+const HOME_COLS = HOME_GRID_COLUMNS
+const HOME_ROWS = HOME_GRID_ROWS
 
 describe('STARTER_TEMPLATES', () => {
   it('exports workspace packs and single-board templates with unique ids', () => {
@@ -84,7 +85,7 @@ describe('STARTER_TEMPLATES', () => {
     for (const t of STARTER_TEMPLATES.filter(t => t.category === 'workspace')) {
       expect(t.widgets).toHaveLength(7)
       expect(t.widgets.map(w => w.type)).toEqual(expect.arrayContaining([
-        'calendar', 'today', 'focus', 'quickCapture', 'weather',
+        'calendar', 'today', 'focus', 'todoList', 'weather',
       ]))
     }
   })
@@ -100,11 +101,18 @@ describe('STARTER_TEMPLATES', () => {
     expect(student.widgetSettings?.focusTimer?.breakEnabled).toBe(true)
   })
 
-  it('personal template includes quickCapture and recent widgets', () => {
+  it('personal template includes todoList and recent widgets', () => {
     const personal = STARTER_TEMPLATES.find(t => t.id === 'personal')!
-    expect(personal.widgets.some(w => w.type === 'quickCapture')).toBe(true)
+    expect(personal.widgets.some(w => w.type === 'todoList')).toBe(true)
     expect(personal.widgets.some(w => w.type === 'recent')).toBe(true)
     expect(personal.widgets.some(w => w.type === 'weather')).toBe(true)
+  })
+
+  it('does not ship quick capture widgets or settings in starter templates', () => {
+    for (const template of STARTER_TEMPLATES) {
+      expect(template.widgets.some(widget => (widget.type as string) === 'quickCapture')).toBe(false)
+      expect(Object.keys(template.widgetSettings ?? {})).not.toContain('quickCapture')
+    }
   })
 
   it('team template includes recent and AI planner widgets', () => {

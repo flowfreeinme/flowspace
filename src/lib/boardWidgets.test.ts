@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BOARD_WIDGET_CATALOG,
   BOARD_WIDGET_MIN_HEIGHT,
   BOARD_WIDGET_MIN_WIDTH,
   BOARD_WIDGET_SIZES,
@@ -22,7 +23,13 @@ describe('boardWidgets', () => {
   it('recognizes supported widget types', () => {
     expect(isBoardWidgetType('focusTimer')).toBe(true)
     expect(isBoardWidgetType('todoList')).toBe(true)
+    expect(isBoardWidgetType('quickCapture')).toBe(true)
     expect(isBoardWidgetType('madeUpWidget')).toBe(false)
+  })
+
+  it('offers to-do list once and hides legacy quick capture from the board widget menu', () => {
+    expect(BOARD_WIDGET_CATALOG.filter(item => item.type === 'todoList')).toHaveLength(1)
+    expect(BOARD_WIDGET_CATALOG.some(item => (item.type as string) === 'quickCapture')).toBe(false)
   })
 
   it('creates a blank todo list widget for boards', () => {

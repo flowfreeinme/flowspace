@@ -1,6 +1,6 @@
-export const MIN_BRUSH_SIZE = 1
-export const MAX_BRUSH_SIZE = 36
-export const DRAWING_CANVAS_BACKGROUND = '#ffffff'
+const MIN_BRUSH_SIZE = 1
+const MAX_BRUSH_SIZE = 36
+const DRAWING_CANVAS_BACKGROUND = '#ffffff'
 
 export function clampBrushSize(size: number) {
   return Math.min(MAX_BRUSH_SIZE, Math.max(MIN_BRUSH_SIZE, Math.round(size)))

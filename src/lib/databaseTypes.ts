@@ -61,7 +61,7 @@ export interface DatabaseRow {
 
 export const TITLE_PROP_ID = '__title__'
 
-export function makeTitleProp(): PropertyDef {
+function makeTitleProp(): PropertyDef {
   return { id: TITLE_PROP_ID, name: 'Name', type: 'text' }
 }
 

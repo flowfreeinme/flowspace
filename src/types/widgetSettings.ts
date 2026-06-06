@@ -22,14 +22,15 @@ export interface RecentWorkConfig {
   excludedFolderIds: string[]
 }
 
-export interface QuickCaptureButton {
-  id: 'board' | 'page' | 'event'
-  label: string
-  enabled: boolean
+export interface HomeTodoItem {
+  id: string
+  text: string
+  done: boolean
 }
 
-export interface QuickCaptureConfig {
-  buttons: QuickCaptureButton[]
+export interface TodoListConfig {
+  title: string
+  items: HomeTodoItem[]
 }
 
 export interface ProPlannerConfig {
@@ -74,21 +75,12 @@ export interface CalendarConfig {
   showEventTimes: boolean
 }
 
-export type WidgetConfig =
-  | TodayConfig
-  | FocusQueueConfig
-  | RecentWorkConfig
-  | QuickCaptureConfig
-  | ProPlannerConfig
-  | FocusTimerConfig
-  | WeatherConfig
-  | CalendarConfig
 
 export type WidgetConfigMap = {
   today: TodayConfig
   focus: FocusQueueConfig
   recent: RecentWorkConfig
-  quickCapture: QuickCaptureConfig
+  todoList: TodoListConfig
   proPlanner: ProPlannerConfig
   focusTimer: FocusTimerConfig
   weather: WeatherConfig

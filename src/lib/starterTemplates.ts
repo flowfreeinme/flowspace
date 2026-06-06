@@ -4,10 +4,10 @@ import type { WidgetConfigMap } from '@/types/widgetSettings'
 import { TEMPLATES as SINGLE_BOARD_TEMPLATES } from './templates'
 
 export type StarterTemplateId = string
-export type StarterTemplateCategory = 'workspace' | 'board'
+type StarterTemplateCategory = 'workspace' | 'board'
 export type TemplateHomeMode = 'merge' | 'replace' | 'none'
 
-export interface BoardDefinition {
+interface BoardDefinition {
   title: string
   icon: string
   blocks: Block[]
@@ -93,7 +93,7 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
       { id: 'today', type: 'today', x: 8, y: 0, w: 4, h: 3 },
       { id: 'focusTimer', type: 'focusTimer', x: 8, y: 3, w: 4, h: 3 },
       { id: 'focus', type: 'focus', x: 8, y: 6, w: 4, h: 3 },
-      { id: 'quickCapture', type: 'quickCapture', x: 8, y: 9, w: 4, h: 3 },
+      { id: 'todoList', type: 'todoList', x: 8, y: 9, w: 4, h: 4 },
     ],
     widgetSettings: {
       calendar: { weekStartsOn: 'monday', showWeekends: true, showEventTimes: true },
@@ -112,6 +112,14 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
         customInstructions: 'Protect study blocks before social or admin tasks.',
       },
       weather: { showPrecipitation: true, showWind: false, forecastDays: 3 },
+      todoList: {
+        title: 'Study tasks',
+        items: [
+          { id: 'student-task-1', text: 'Review today\'s notes', done: false },
+          { id: 'student-task-2', text: 'Check upcoming assignments', done: false },
+          { id: 'student-task-3', text: 'Plan one focused study block', done: false },
+        ],
+      },
     },
   },
   {
@@ -119,7 +127,7 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
     category: 'workspace',
     label: 'Personal',
     icon: '✅',
-    description: 'Goals, daily tasks, capture, recent work, focus, and local conditions.',
+    description: 'Goals, daily tasks, recent work, focus, and local conditions.',
     tags: ['3 boards', '7 widgets', 'Life admin'],
     boardCount: 3,
     buildBoards: () => [
@@ -165,7 +173,7 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
       { id: 'recent', type: 'recent', x: 0, y: 8, w: 4, h: 4 },
       { id: 'weather', type: 'weather', x: 4, y: 8, w: 4, h: 4 },
       { id: 'today', type: 'today', x: 8, y: 0, w: 4, h: 3 },
-      { id: 'quickCapture', type: 'quickCapture', x: 8, y: 3, w: 4, h: 3 },
+      { id: 'todoList', type: 'todoList', x: 8, y: 3, w: 4, h: 4 },
       { id: 'focusTimer', type: 'focusTimer', x: 8, y: 6, w: 4, h: 3 },
       { id: 'focus', type: 'focus', x: 8, y: 9, w: 4, h: 3 },
     ],
@@ -180,6 +188,14 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
         dailyGoal: 2,
       },
       weather: { showHumidity: false, showWind: false, forecastDays: 3 },
+      todoList: {
+        title: 'Personal tasks',
+        items: [
+          { id: 'personal-task-1', text: 'Pick today\'s top priority', done: false },
+          { id: 'personal-task-2', text: 'Handle one life admin task', done: false },
+          { id: 'personal-task-3', text: 'Review weekly goals', done: false },
+        ],
+      },
     },
   },
   {
@@ -187,7 +203,7 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
     category: 'workspace',
     label: 'Team planning',
     icon: '🏗️',
-    description: 'Project boards, sprint planning, AI planning, recent work, and team capture.',
+    description: 'Project boards, sprint planning, AI planning, recent work, and team tasks.',
     tags: ['3 boards', '7 widgets', 'Sprint mode'],
     boardCount: 3,
     buildBoards: () => [
@@ -238,7 +254,7 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
       { id: 'recent', type: 'recent', x: 4, y: 8, w: 4, h: 4 },
       { id: 'today', type: 'today', x: 8, y: 0, w: 4, h: 3 },
       { id: 'focus', type: 'focus', x: 8, y: 3, w: 4, h: 3 },
-      { id: 'quickCapture', type: 'quickCapture', x: 8, y: 6, w: 4, h: 3 },
+      { id: 'todoList', type: 'todoList', x: 8, y: 6, w: 4, h: 4 },
       { id: 'weather', type: 'weather', x: 8, y: 9, w: 4, h: 3 },
     ],
     widgetSettings: {
@@ -246,11 +262,12 @@ const WORKSPACE_TEMPLATES: StarterTemplate[] = [
       today: { greeting: 'Team today', showWeatherSummary: false },
       focus: { title: 'Sprint focus', itemCount: 4, filter: 'boards' },
       recent: { title: 'Recent project work', itemCount: 5, filter: 'boards', sortBy: 'lastModified' },
-      quickCapture: {
-        buttons: [
-          { id: 'board', label: 'Board', enabled: true },
-          { id: 'page', label: 'Decision', enabled: true },
-          { id: 'event', label: 'Meeting', enabled: true },
+      todoList: {
+        title: 'Team tasks',
+        items: [
+          { id: 'team-task-1', text: 'Confirm sprint priorities', done: false },
+          { id: 'team-task-2', text: 'Assign next owners', done: false },
+          { id: 'team-task-3', text: 'Capture blockers before standup', done: false },
         ],
       },
       proPlanner: {

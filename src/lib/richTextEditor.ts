@@ -1,5 +1,5 @@
-export const MIN_FONT_SIZE = 1
-export const MAX_FONT_SIZE = 7
+const MIN_FONT_SIZE = 1
+const MAX_FONT_SIZE = 7
 
 export function clampFontSize(value: string | number, fallback = 3) {
   const parsed = typeof value === 'number' ? value : parseInt(value, 10)

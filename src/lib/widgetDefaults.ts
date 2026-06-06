@@ -1,5 +1,5 @@
 import type {
-  TodayConfig, FocusQueueConfig, RecentWorkConfig, QuickCaptureConfig,
+  TodayConfig, FocusQueueConfig, RecentWorkConfig, TodoListConfig,
   ProPlannerConfig, FocusTimerConfig, WeatherConfig, CalendarConfig,
 } from '@/types/widgetSettings'
 import type { HomeWidgetType } from '@/types'
@@ -29,13 +29,12 @@ export const DEFAULT_WIDGET_SETTINGS: Record<HomeWidgetType, object> = {
     excludedFolderIds: [],
   } satisfies RecentWorkConfig,
 
-  quickCapture: {
-    buttons: [
-      { id: 'board', label: 'Board', enabled: true },
-      { id: 'page', label: 'Page', enabled: true },
-      { id: 'event', label: 'Event', enabled: true },
+  todoList: {
+    title: 'To-do list',
+    items: [
+      { id: 'todo-1', text: 'Add your first task', done: false },
     ],
-  } satisfies QuickCaptureConfig,
+  } satisfies TodoListConfig,
 
   proPlanner: {
     workStart: '09:00',

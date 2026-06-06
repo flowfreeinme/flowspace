@@ -1,7 +1,7 @@
 import type { HomeWidgetType } from '@/types'
 import { HOME_WIDGET_CATALOG } from './homeCenter'
 
-export type BoardWidgetType = HomeWidgetType | 'todoList'
+export type BoardWidgetType = HomeWidgetType | 'quickCapture'
 
 export interface BoardTodoItem {
   id: string
@@ -37,16 +37,26 @@ export const BOARD_WIDGET_SIZES: Record<BoardWidgetType, { width: number; height
 export const BOARD_WIDGET_CATALOG = [
   { type: 'todoList' as const, title: 'To-do list', description: 'Track board tasks and check them off as you go.' },
   { type: 'calendar' as const, title: 'Mini calendar', description: 'Upcoming events and a compact date strip.' },
-  ...HOME_WIDGET_CATALOG,
+  ...HOME_WIDGET_CATALOG.filter(item => item.type !== 'todoList'),
 ]
 
-export const BOARD_WIDGET_TYPES = BOARD_WIDGET_CATALOG.map(item => item.type)
+export const BOARD_WIDGET_TYPES = [
+  ...BOARD_WIDGET_CATALOG.map(item => item.type),
+  'quickCapture' as const,
+]
 
 export function isBoardWidgetType(type: unknown): type is BoardWidgetType {
   return typeof type === 'string' && BOARD_WIDGET_TYPES.includes(type as BoardWidgetType)
 }
 
 export function getBoardWidgetMeta(type: BoardWidgetType) {
+  if (type === 'quickCapture') {
+    return {
+      type,
+      title: 'Quick capture',
+      description: 'Legacy quick capture widget',
+    }
+  }
   return BOARD_WIDGET_CATALOG.find(item => item.type === type) ?? {
     type,
     title: 'Widget',
@@ -54,7 +64,7 @@ export function getBoardWidgetMeta(type: BoardWidgetType) {
   }
 }
 
-export function clampBoardWidgetSize(type: BoardWidgetType, width: number, height: number) {
+function clampBoardWidgetSize(type: BoardWidgetType, width: number, height: number) {
   const defaults = BOARD_WIDGET_SIZES[type]
   return {
     width: Math.max(BOARD_WIDGET_MIN_WIDTH, Math.round(Number.isFinite(width) ? width : defaults.width)),

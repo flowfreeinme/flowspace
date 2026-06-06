@@ -17,7 +17,7 @@ import WidgetShell from './widgets/WidgetShell'
 import TodayWidget from './widgets/TodayWidget'
 import FocusQueueWidget from './widgets/FocusQueueWidget'
 import RecentWorkWidget from './widgets/RecentWorkWidget'
-import QuickCaptureWidget from './widgets/QuickCaptureWidget'
+import TodoListWidget from './widgets/TodoListWidget'
 import FocusTimerWidget from './widgets/FocusTimerWidget'
 import WeatherWidget from './widgets/WeatherWidget'
 import ProPlannerWidget from './widgets/ProPlannerWidget'
@@ -26,7 +26,6 @@ import AiBriefingWidget from './widgets/AiBriefingWidget'
 import TodaySettings from './widgets/settings/TodaySettings'
 import FocusQueueSettings from './widgets/settings/FocusQueueSettings'
 import RecentWorkSettings from './widgets/settings/RecentWorkSettings'
-import QuickCaptureSettings from './widgets/settings/QuickCaptureSettings'
 import ProPlannerSettings from './widgets/settings/ProPlannerSettings'
 import FocusTimerSettings from './widgets/settings/FocusTimerSettings'
 import WeatherSettings from './widgets/settings/WeatherSettings'
@@ -258,7 +257,7 @@ export default function HomeScreen() {
     if (widget.type === 'today') return <TodaySettings config={getWidgetSettings('today', widgetSettings)} />
     if (widget.type === 'focus') return <FocusQueueSettings config={getWidgetSettings('focus', widgetSettings)} />
     if (widget.type === 'recent') return <RecentWorkSettings config={getWidgetSettings('recent', widgetSettings)} />
-    if (widget.type === 'quickCapture') return <QuickCaptureSettings config={getWidgetSettings('quickCapture', widgetSettings)} />
+    if (widget.type === 'todoList') return null
     if (widget.type === 'proPlanner') return <ProPlannerSettings config={getWidgetSettings('proPlanner', widgetSettings)} />
     if (widget.type === 'focusTimer') return <FocusTimerSettings config={getWidgetSettings('focusTimer', widgetSettings)} />
     if (widget.type === 'weather') return <WeatherSettings config={getWidgetSettings('weather', widgetSettings)} />
@@ -277,7 +276,7 @@ export default function HomeScreen() {
     if (widget.type === 'today') return <TodayWidget config={getWidgetSettings('today', widgetSettings)} />
     if (widget.type === 'focus') return <FocusQueueWidget config={getWidgetSettings('focus', widgetSettings)} />
     if (widget.type === 'recent') return <RecentWorkWidget config={getWidgetSettings('recent', widgetSettings)} />
-    if (widget.type === 'quickCapture') return <QuickCaptureWidget config={getWidgetSettings('quickCapture', widgetSettings)} />
+    if (widget.type === 'todoList') return <TodoListWidget config={getWidgetSettings('todoList', widgetSettings)} />
     if (widget.type === 'proPlanner') return <ProPlannerWidget config={getWidgetSettings('proPlanner', widgetSettings)} />
     if (widget.type === 'focusTimer') return <FocusTimerWidget config={getWidgetSettings('focusTimer', widgetSettings)} />
     if (widget.type === 'aiBriefing') return <AiBriefingWidget />

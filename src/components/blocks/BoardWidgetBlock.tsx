@@ -44,6 +44,7 @@ import {
   type WeatherLocation,
   type WeatherSummary,
 } from '@/lib/weather'
+import DayPlanDisplay from '../widgets/DayPlanDisplay'
 
 const CORNER_HANDLES = [
   { id: 'nw', style: { left: -4, top: -4, cursor: 'nw-resize' } },
@@ -437,8 +438,11 @@ export default function BoardWidgetBlock({
   }
 
   function renderQuickCapture() {
-    const config = getWidgetSettings('quickCapture', widgetSettings)
-    const buttons = config.buttons.filter(button => button.enabled)
+    const buttons = [
+      { id: 'board', label: 'Board' },
+      { id: 'page', label: 'Page' },
+      { id: 'event', label: 'Event' },
+    ] as const
     return (
       <div className="flex h-full min-h-0 flex-col gap-2 p-3">
         <p className="text-base font-semibold text-white">Quick capture</p>
@@ -472,8 +476,8 @@ export default function BoardWidgetBlock({
             Plan
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-surface-3 bg-surface-2 p-2.5 text-xs leading-relaxed text-gray-300 whitespace-pre-wrap">
-          {dayPlan ?? 'Generate a tight plan from this workspace and your calendar.'}
+        <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-surface-3 bg-surface-2 p-2.5">
+          <DayPlanDisplay plan={dayPlan} emptyText="Generate a detailed plan from this workspace and your calendar." />
         </div>
         {dayPlanError && <p className="truncate text-[10px] text-yellow-300">{dayPlanError}</p>}
       </div>

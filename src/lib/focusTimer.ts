@@ -1,7 +1,6 @@
 export const MIN_FOCUS_TIMER_MINUTES = 1
 export const MAX_FOCUS_TIMER_MINUTES = 480
 export const DEFAULT_FOCUS_TIMER_MINUTES = 25
-export const FOCUS_TIMER_PRESETS = [25, 50, 90] as const
 
 export function clampFocusTimerMinutes(minutes: number) {
   if (!Number.isFinite(minutes)) return DEFAULT_FOCUS_TIMER_MINUTES

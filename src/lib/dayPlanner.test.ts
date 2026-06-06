@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDayPlannerPrompt, buildDayPlannerWorkspaceContext, createFallbackDayPlan } from './dayPlanner'
+import { buildDayPlannerPrompt, buildDayPlannerWorkspaceContext, createFallbackDayPlan, parseDayPlanSections } from './dayPlanner'
 import type { CalendarEvent } from '@/types/calendar'
 import type { Page } from '@/types'
 
@@ -31,8 +31,21 @@ function event(overrides: Partial<CalendarEvent>): CalendarEvent {
 }
 
 describe('day planner helpers', () => {
-  it('builds a direct prompt for a concise daily plan', () => {
-    expect(buildDayPlannerPrompt(new Date('2026-05-16T14:00:00Z'))).toContain('Create a practical plan for today')
+  it('builds a detailed day planning prompt with planner settings', () => {
+    const prompt = buildDayPlannerPrompt(new Date('2026-05-16T14:00:00Z'), {
+      workStart: '08:30',
+      workEnd: '18:00',
+      focusStyle: 'deep-work',
+      customInstructions: 'Leave room for a gym break.',
+    })
+
+    expect(prompt).toContain('Create an in-depth plan for today')
+    expect(prompt).toContain('Work window: 08:30-18:00')
+    expect(prompt).toContain('Planning style: deep work')
+    expect(prompt).toContain('Leave room for a gym break.')
+    expect(prompt).toContain('Priority stack')
+    expect(prompt).toContain('Time-blocked schedule')
+    expect(prompt).toContain('Contingency plan')
   })
 
   it('summarizes upcoming events and active work for AI context', () => {
@@ -98,5 +111,30 @@ describe('day planner helpers', () => {
     expect(fallback).toContain('Local plan')
     expect(fallback).toContain('Advising meeting')
     expect(fallback).toContain('Research board')
+    expect(fallback).toContain('Priority stack')
+    expect(fallback).toContain('Time blocks')
+    expect(fallback).toContain('Next actions')
+  })
+
+  it('parses day plans into readable sections', () => {
+    const sections = parseDayPlanSections(`
+      ### Priority stack
+      1. Finish the proposal draft.
+      2. Review calendar conflicts.
+
+      Time-blocked schedule:
+      - 9:00-10:30 Deep work on proposal
+      - 10:30-10:45 Buffer
+
+      **Next actions**
+      • Open Research board
+      • Check off one task
+    `)
+
+    expect(sections).toEqual([
+      { title: 'Priority stack', items: ['Finish the proposal draft.', 'Review calendar conflicts.'] },
+      { title: 'Time-blocked schedule', items: ['9:00-10:30 Deep work on proposal', '10:30-10:45 Buffer'] },
+      { title: 'Next actions', items: ['Open Research board', 'Check off one task'] },
+    ])
   })
 })

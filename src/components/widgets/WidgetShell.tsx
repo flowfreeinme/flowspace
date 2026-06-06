@@ -59,6 +59,7 @@ export default function WidgetShell({
   children,
 }: WidgetShellProps) {
   const isMobile = useIsMobile()
+  const hasSettings = Boolean(settingsForm)
 
   function handleClickCapture(event: React.MouseEvent<HTMLElement>) {
     if (!editingHome) return
@@ -88,13 +89,15 @@ export default function WidgetShell({
         className="absolute right-2 top-2 z-50 flex items-center gap-1"
         data-home-widget-edit-control="true"
       >
-        <WidgetSettingsPopover
-          open={openSettings}
-          onOpen={onOpenSettings}
-          onClose={onCloseSettings}
-        >
-          {settingsForm}
-        </WidgetSettingsPopover>
+        {hasSettings && (
+          <WidgetSettingsPopover
+            open={openSettings}
+            onOpen={onOpenSettings}
+            onClose={onCloseSettings}
+          >
+            {settingsForm}
+          </WidgetSettingsPopover>
+        )}
         {editingHome && widget.type !== 'calendar' && (
           <button
             type="button"

@@ -6,6 +6,7 @@ import { useAuth } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
 import { buildDayPlannerPrompt, buildDayPlannerWorkspaceContext, createFallbackDayPlan } from '@/lib/dayPlanner'
 import type { ProPlannerConfig } from '@/types/widgetSettings'
+import DayPlanDisplay from './DayPlanDisplay'
 
 export default function ProPlannerWidget({ config }: { config: ProPlannerConfig }) {
   const { pages } = useWorkspace()
@@ -39,7 +40,7 @@ export default function ProPlannerWidget({ config }: { config: ProPlannerConfig 
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: buildDayPlannerPrompt(now) }],
+          messages: [{ role: 'user', content: buildDayPlannerPrompt(now, config) }],
           workspaceContext: buildDayPlannerWorkspaceContext({ now, pages, events }),
         }),
       })
@@ -49,7 +50,7 @@ export default function ProPlannerWidget({ config }: { config: ProPlannerConfig 
       if (typeof data.message !== 'string') throw new Error('AI day planner returned an invalid response.')
       setDayPlan(data.message)
     } catch (err) {
-      setDayPlan(createFallbackDayPlan({ now, pages: visiblePages, events: upcomingEvents }))
+      setDayPlan(createFallbackDayPlan({ now, pages: visiblePages, events: upcomingEvents, config }))
       setDayPlanError(err instanceof Error ? `AI unavailable: ${err.message}` : 'AI unavailable. Showing a local plan.')
     } finally {
       setDayPlanLoading(false)
@@ -66,14 +67,14 @@ export default function ProPlannerWidget({ config }: { config: ProPlannerConfig 
         <p className="text-base font-semibold text-white">AI day planner</p>
         {!dayPlan && (
           <p className="mt-1 text-sm leading-relaxed text-gray-500">
-            {config.workStart}–{config.workEnd} · {config.focusStyle.replace('-', ' ')}
+            In-depth plan · {config.workStart}–{config.workEnd} · {config.focusStyle.replace('-', ' ')}
             {config.customInstructions ? ` · ${config.customInstructions}` : ''}
           </p>
         )}
       </div>
       {dayPlan && (
-        <div className="my-3 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-xl border border-surface-3 bg-surface-0/40 px-3 py-2 text-xs leading-relaxed text-gray-300">
-          {dayPlan}
+        <div className="my-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-surface-3 bg-surface-0/40 px-3 py-3">
+          <DayPlanDisplay plan={dayPlan} emptyText="Generate a detailed plan from this workspace and your calendar." />
         </div>
       )}
       {dayPlanError && (

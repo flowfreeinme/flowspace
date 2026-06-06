@@ -5,14 +5,14 @@ export interface RelatedPage {
   title: string
 }
 
-export interface PageInsights {
+interface PageInsights {
   relatedPages: RelatedPage[]
   actionItems: string[]
   analyzedAt: number
   status: 'idle' | 'analyzing' | 'ready' | 'error'
 }
 
-export interface WhatNext {
+interface WhatNext {
   pageId: string
   title: string
   reason: string

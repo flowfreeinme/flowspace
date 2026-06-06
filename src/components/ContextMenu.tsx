@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Pencil, Trash2, Info } from 'lucide-react'
 
-export interface ContextMenuOption {
+interface ContextMenuOption {
   label: string
   icon: React.ReactNode
   onClick: () => void
