@@ -1,10 +1,14 @@
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64.length % 4)) % 4)
-  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = window.atob(b64)
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
+  try {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4)
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const raw = window.atob(b64)
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
+  } catch {
+    throw new Error('Invalid VAPID public key')
+  }
 }
 
 export function buildNotifyHour(hour: number, ampm: 'AM' | 'PM'): number {
@@ -64,7 +68,7 @@ export async function subscribeToPush(
   })
 
   const sub = subscription.toJSON()
-  await fetch('/api/push-subscribe', {
+  const response = await fetch('/api/push-subscribe', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -79,6 +83,10 @@ export async function subscribeToPush(
     }),
   })
 
+  if (!response.ok) {
+    throw new Error(`Server failed to register push subscription: ${response.status}`)
+  }
+
   return 'granted'
 }
 
@@ -92,7 +100,7 @@ export async function unsubscribeFromPush(accessToken: string): Promise<void> {
   const endpoint = subscription.endpoint
   await subscription.unsubscribe()
 
-  await fetch('/api/push-unsubscribe', {
+  const response = await fetch('/api/push-unsubscribe', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -100,6 +108,10 @@ export async function unsubscribeFromPush(accessToken: string): Promise<void> {
     },
     body: JSON.stringify({ endpoint }),
   })
+
+  if (!response.ok) {
+    throw new Error(`Server failed to delete push subscription: ${response.status}`)
+  }
 }
 
 export async function isSubscribedToPush(): Promise<boolean> {
@@ -121,7 +133,7 @@ export async function updatePushNotifyHour(
   if (!subscription) return
 
   const sub = subscription.toJSON()
-  await fetch('/api/push-subscribe', {
+  const response = await fetch('/api/push-subscribe', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -135,4 +147,8 @@ export async function updatePushNotifyHour(
       notify_hour: notifyHour,
     }),
   })
+
+  if (!response.ok) {
+    throw new Error(`Server failed to update push notification hour: ${response.status}`)
+  }
 }
