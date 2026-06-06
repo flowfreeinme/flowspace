@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "crons": [
     { "path": "/api/google-calendar?action=cron", "schedule": "0 8 * * *" },
-    { "path": "/api/push-send", "schedule": "0 * * * *" }
+    { "path": "/api/push-send", "schedule": "0 13 * * *" }
   ],
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
