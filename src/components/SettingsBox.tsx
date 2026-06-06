@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Settings, X, Moon, Sun, Type, Layout, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react'
 import { useWorkspace } from '@/stores/workspace'
 import { formatBytes, getWorkspaceMetrics } from '@/lib/workspaceMetrics'
 import { getStoredWorkspaceSortMode, setStoredWorkspaceSortMode, WORKSPACE_SORT_OPTIONS } from '@/lib/workspaceSort'
 import type { WorkspaceSortMode } from '@/lib/boardOrganization'
+import { useAuth } from '@/stores/auth'
+import {
+  buildNotifyHour,
+  isSubscribedToPush,
+  subscribeToPush,
+  unsubscribeFromPush,
+  updatePushNotifyHour,
+} from '@/lib/pushNotifications'
 
-type Tab = 'appearance' | 'layout' | 'shortcuts' | 'about'
+type Tab = 'appearance' | 'layout' | 'shortcuts' | 'notifications' | 'about'
 
 interface Props {
   open?: boolean
@@ -25,6 +33,17 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
   const [hiddenPages, setHiddenPages] = useState<Set<string>>(new Set())
   const [order, setOrder] = useState<string[]>([])
   const metrics = getWorkspaceMetrics({ pages, rootPages, tabs: [], activeTabId: null })
+  const { session } = useAuth()
+  const [notifEnabled, setNotifEnabled] = useState(false)
+  const [notifPermissionDenied, setNotifPermissionDenied] = useState(false)
+  const [notifHour, setNotifHour] = useState(8)
+  const [notifAmpm, setNotifAmpm] = useState<'AM' | 'PM'>('AM')
+  const [notifLoading, setNotifLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'notifications') return
+    isSubscribedToPush().then(setNotifEnabled)
+  }, [tab])
 
   function applyFontSize(size: 'sm' | 'md' | 'lg') {
     setFontSize(size)
@@ -71,6 +90,37 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
     setOpen(false)
   }
 
+  async function handleNotifToggle() {
+    if (!session?.access_token) return
+    setNotifLoading(true)
+    setNotifPermissionDenied(false)
+    try {
+      if (notifEnabled) {
+        await unsubscribeFromPush(session.access_token)
+        setNotifEnabled(false)
+      } else {
+        const result = await subscribeToPush(
+          session.access_token,
+          buildNotifyHour(notifHour, notifAmpm),
+        )
+        if (result === 'denied') {
+          setNotifPermissionDenied(true)
+        } else if (result === 'granted') {
+          setNotifEnabled(true)
+        }
+      }
+    } finally {
+      setNotifLoading(false)
+    }
+  }
+
+  async function handleNotifTimeChange(hour: number, ampm: 'AM' | 'PM') {
+    setNotifHour(hour)
+    setNotifAmpm(ampm)
+    if (!notifEnabled || !session?.access_token) return
+    await updatePushNotifyHour(session.access_token, buildNotifyHour(hour, ampm))
+  }
+
   const shortcuts = [
     { keys: '⌘K', label: 'Command palette' },
     { keys: '⌘N', label: 'New page' },
@@ -84,6 +134,7 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
     { id: 'appearance', label: 'Appearance' },
     !mobile && { id: 'layout', label: 'Layout' },
     !mobile && { id: 'shortcuts', label: 'Shortcuts' },
+    { id: 'notifications' as Tab, label: 'Notifications' },
     { id: 'about', label: 'About' },
   ] as const).filter(Boolean) as { id: Tab; label: string }[]
 
@@ -244,6 +295,54 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
                       <kbd className="text-xs bg-surface-3 border border-surface-4 text-gray-300 px-2 py-0.5 rounded-md font-mono">{s.keys}</kbd>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Notifications */}
+              {tab === 'notifications' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-200">Morning briefing</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Today's calendar events as a system notification</p>
+                    </div>
+                    <button
+                      onClick={handleNotifToggle}
+                      disabled={notifLoading}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${notifEnabled ? 'bg-violet-600' : 'bg-gray-600'} ${notifLoading ? 'opacity-50' : ''}`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${notifEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {notifPermissionDenied && (
+                    <p className="text-xs text-amber-400">
+                      Allow notifications in your browser settings to use this feature.
+                    </p>
+                  )}
+
+                  {notifEnabled && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Deliver at</span>
+                      <select
+                        value={notifHour}
+                        onChange={e => handleNotifTimeChange(Number(e.target.value), notifAmpm)}
+                        className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none"
+                      >
+                        {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={notifAmpm}
+                        onChange={e => handleNotifTimeChange(notifHour, e.target.value as 'AM' | 'PM')}
+                        className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none"
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
