@@ -109,16 +109,26 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
           setNotifEnabled(true)
         }
       }
+    } catch (err) {
+      console.error('handleNotifToggle failed:', err)
     } finally {
       setNotifLoading(false)
     }
   }
 
   async function handleNotifTimeChange(hour: number, ampm: 'AM' | 'PM') {
-    setNotifHour(hour)
-    setNotifAmpm(ampm)
-    if (!notifEnabled || !session?.access_token) return
-    await updatePushNotifyHour(session.access_token, buildNotifyHour(hour, ampm))
+    if (!notifEnabled || !session?.access_token) {
+      setNotifHour(hour)
+      setNotifAmpm(ampm)
+      return
+    }
+    try {
+      await updatePushNotifyHour(session.access_token, buildNotifyHour(hour, ampm))
+      setNotifHour(hour)
+      setNotifAmpm(ampm)
+    } catch (err) {
+      console.error('handleNotifTimeChange failed:', err)
+    }
   }
 
   const shortcuts = [
@@ -309,6 +319,8 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
                     <button
                       onClick={handleNotifToggle}
                       disabled={notifLoading}
+                      aria-label={notifEnabled ? 'Disable morning briefing' : 'Enable morning briefing'}
+                      aria-pressed={notifEnabled}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${notifEnabled ? 'bg-violet-600' : 'bg-gray-600'} ${notifLoading ? 'opacity-50' : ''}`}
                     >
                       <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${notifEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
@@ -327,6 +339,8 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
                       <select
                         value={notifHour}
                         onChange={e => handleNotifTimeChange(Number(e.target.value), notifAmpm)}
+                        disabled={notifLoading}
+                        aria-label="Notification hour"
                         className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none"
                       >
                         {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
@@ -336,6 +350,8 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
                       <select
                         value={notifAmpm}
                         onChange={e => handleNotifTimeChange(notifHour, e.target.value as 'AM' | 'PM')}
+                        disabled={notifLoading}
+                        aria-label="AM or PM"
                         className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none"
                       >
                         <option value="AM">AM</option>
