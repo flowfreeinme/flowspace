@@ -9,6 +9,7 @@ export default async function handler(req: any, res: any) {
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '',
     process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '',
+    { global: { headers: { Authorization: `Bearer ${token}` } } },
   )
 
   const { data: { user }, error: authError } = await supabase.auth.getUser(token)
