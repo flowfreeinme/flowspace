@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { Search, Plus, PanelLeftClose, Home, Layout, Keyboard } from 'lucide-react'
 import { useWorkspace } from '@/stores/workspace'
 import { STARTER_TEMPLATES } from '@/lib/starterTemplates'
+import { searchBlocks } from '@/lib/search'
 
 interface CommandPaletteProps {
   onClose: () => void
@@ -9,7 +10,7 @@ interface CommandPaletteProps {
   showShortcutsAction?: boolean
 }
 
-type ItemType = 'page' | 'action' | 'template'
+type ItemType = 'page' | 'action' | 'template' | 'content' | 'content-header'
 
 interface PaletteItem {
   id: string
@@ -111,11 +112,29 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
       ...templateItems.filter(t => t.label.toLowerCase().includes(q) || (t.sub ?? '').toLowerCase().includes(q)),
       ...pageItems.filter(p => p.label.toLowerCase().includes(q)),
     ]
+
+    const contentResults = searchBlocks(query, pages)
+    const contentItems: PaletteItem[] = contentResults.map(r => ({
+      id: `content-${r.blockId}`,
+      type: 'content' as const,
+      icon: r.pageIcon,
+      label: r.pageTitle,
+      sub: r.snippet,
+      action: () => { openTab(r.pageId); onClose() },
+    }))
+
+    if (contentItems.length > 0) {
+      filtered.push(
+        { id: 'content-header', type: 'content-header' as const, icon: <Search size={14} />, label: 'Content', sub: undefined, action: () => {} },
+        ...contentItems,
+      )
+    }
+
     return filtered
   }, [query, pages, rootPages, onOpenShortcuts, showShortcutsAction, applyStarterTemplate, openTab, onClose, setHomeActive, toggleSidebar, openTemplatePicker])
 
   // Skip non-interactive header items
-  const interactive = allItems.filter(i => !(i.id === 'tpl-header'))
+  const interactive = allItems.filter(i => i.id !== 'tpl-header' && i.id !== 'content-header')
   const selIdx = Math.min(selected, interactive.length - 1)
 
   useEffect(() => { setSelected(0) }, [query])
@@ -136,6 +155,8 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
     page: 'text-gray-400',
     action: 'text-accent',
     template: 'text-yellow-500',
+    content: 'text-gray-400',
+    'content-header': 'text-gray-600',
   }
 
   let interactiveIdx = 0
@@ -154,7 +175,7 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Search boards, actions, templates…"
+            placeholder="Search pages, blocks, actions…"
             className="flex-1 bg-transparent text-white placeholder-gray-600 outline-none text-sm"
           />
           <kbd className="text-xs text-gray-600 bg-surface-3 px-1.5 py-0.5 rounded">esc</kbd>
@@ -170,6 +191,14 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
               return (
                 <div key={item.id} className="px-4 pt-3 pb-1">
                   <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Templates</span>
+                </div>
+              )
+            }
+
+            if (item.id === 'content-header') {
+              return (
+                <div key={item.id} className="px-4 pt-3 pb-1">
+                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Content</span>
                 </div>
               )
             }
