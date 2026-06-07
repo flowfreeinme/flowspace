@@ -36,6 +36,7 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
   const { session } = useAuth()
   const [notifEnabled, setNotifEnabled] = useState(false)
   const [notifPermissionDenied, setNotifPermissionDenied] = useState(false)
+  const [notifError, setNotifError] = useState<string | null>(null)
   const [notifHour, setNotifHour] = useState(8)
   const [notifAmpm, setNotifAmpm] = useState<'AM' | 'PM'>('AM')
   const [notifLoading, setNotifLoading] = useState(false)
@@ -91,9 +92,13 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
   }
 
   async function handleNotifToggle() {
-    if (!session?.access_token) return
-    setNotifLoading(true)
+    setNotifError(null)
     setNotifPermissionDenied(false)
+    if (!session?.access_token) {
+      setNotifError('Not signed in — please reload and try again.')
+      return
+    }
+    setNotifLoading(true)
     try {
       if (notifEnabled) {
         await unsubscribeFromPush(session.access_token)
@@ -105,12 +110,15 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
         )
         if (result === 'denied') {
           setNotifPermissionDenied(true)
+        } else if (result === 'unsupported') {
+          setNotifError('Push notifications are not supported in this browser.')
         } else if (result === 'granted') {
           setNotifEnabled(true)
         }
       }
     } catch (err) {
       console.error('handleNotifToggle failed:', err)
+      setNotifError(err instanceof Error ? err.message : 'Something went wrong — check the browser console.')
     } finally {
       setNotifLoading(false)
     }
@@ -331,6 +339,10 @@ export default function SettingsBox({ open: openProp, onClose, mobile }: Props =
                     <p className="text-xs text-amber-400">
                       Allow notifications in your browser settings to use this feature.
                     </p>
+                  )}
+
+                  {notifError && (
+                    <p className="text-xs text-red-400">{notifError}</p>
                   )}
 
                   {notifEnabled && (
