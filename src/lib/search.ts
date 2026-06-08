@@ -16,7 +16,7 @@ const SEARCHABLE_TYPES = new Set<BlockType>([
 ])
 
 const MAX_RESULTS = 8
-const SNIPPET_RADIUS = 40
+const SNIPPET_RADIUS = 25
 
 function makeSnippet(content: string, query: string): string {
   const idx = content.toLowerCase().indexOf(query.toLowerCase())
@@ -53,9 +53,10 @@ export function searchBlocks(
         blockType: block.type,
         snippet: makeSnippet(block.content, q),
       })
-
-      if (results.length >= MAX_RESULTS) return results
+      break  // one match per page, move to next page
     }
+
+    if (results.length >= MAX_RESULTS) break  // cap on pages, not blocks
   }
 
   return results

@@ -71,22 +71,24 @@ describe('searchBlocks', () => {
   })
 
   it('matches in heading, todo, bullet, code, quote, numbered, textbox, section blocks', () => {
-    const pages = {
-      p1: makePage({
-        blocks: [
-          { id: 'b1', type: 'heading1', content: 'Meeting Notes' },
-          { id: 'b2', type: 'heading2', content: 'meeting prep' },
-          { id: 'b3', type: 'heading3', content: 'pre-meeting tasks' },
-          { id: 'b4', type: 'todo', content: 'schedule meeting' },
-          { id: 'b5', type: 'bullet', content: 'attend the meeting' },
-          { id: 'b6', type: 'numbered', content: 'first meeting item' },
-          { id: 'b7', type: 'code', content: '// meeting scheduler' },
-          { id: 'b8', type: 'quote', content: 'as discussed in the meeting' },
-          { id: 'b9', type: 'textbox', content: 'meeting room notes' },
-          { id: 'b10', type: 'section', content: 'meeting section' },
-        ],
-      }),
-    }
+    const blockDefs = [
+      { id: 'b1', type: 'heading1' as const, content: 'Meeting Notes' },
+      { id: 'b2', type: 'heading2' as const, content: 'meeting prep' },
+      { id: 'b3', type: 'heading3' as const, content: 'pre-meeting tasks' },
+      { id: 'b4', type: 'todo' as const, content: 'schedule meeting' },
+      { id: 'b5', type: 'bullet' as const, content: 'attend the meeting' },
+      { id: 'b6', type: 'numbered' as const, content: 'first meeting item' },
+      { id: 'b7', type: 'code' as const, content: '// meeting scheduler' },
+      { id: 'b8', type: 'quote' as const, content: 'as discussed in the meeting' },
+      { id: 'b9', type: 'textbox' as const, content: 'meeting room notes' },
+      { id: 'b10', type: 'section' as const, content: 'meeting section' },
+    ]
+    const pages = Object.fromEntries(
+      blockDefs.map((block, i) => [
+        `p${i}`,
+        makePage({ id: `p${i}`, blocks: [block] }),
+      ])
+    )
     const results = searchBlocks('meeting', pages)
     expect(results.length).toBeGreaterThanOrEqual(8)
     expect(results.map(r => r.blockType)).toEqual(
@@ -113,24 +115,33 @@ describe('searchBlocks', () => {
   })
 
   it('caps results at 8', () => {
-    const blocks = Array.from({ length: 20 }, (_, i) => ({
+    const pages = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => [
+        `p${i}`,
+        makePage({ id: `p${i}`, blocks: [{ id: `b${i}`, type: 'text' as const, content: `item ${i} contains the keyword` }] }),
+      ])
+    )
+    expect(searchBlocks('keyword', pages)).toHaveLength(8)
+  })
+
+  it('returns results from multiple pages even when one page has many matches', () => {
+    const manyBlocks = Array.from({ length: 10 }, (_, i) => ({
       id: `b${i}`,
       type: 'text' as const,
-      content: `item ${i} contains the keyword`,
+      content: `needle block ${i}`,
     }))
-    const pages = { p1: makePage({ blocks }) }
-    expect(searchBlocks('keyword', pages)).toHaveLength(8)
+    const pages = {
+      p1: makePage({ id: 'p1', blocks: manyBlocks }),
+      p2: makePage({ id: 'p2', blocks: [{ id: 'b_p2', type: 'text' as const, content: 'needle in page two' }] }),
+    }
+    const results = searchBlocks('needle', pages)
+    expect(results.map(r => r.pageId)).toContain('p2')
   })
 
   it('matches in textbox and section blocks', () => {
     const pages = {
-      p1: makePage({
-        id: 'p1',
-        blocks: [
-          { id: 'b1', type: 'textbox', content: 'meeting room notes' },
-          { id: 'b2', type: 'section', content: 'meeting section header' },
-        ],
-      }),
+      p1: makePage({ id: 'p1', blocks: [{ id: 'b1', type: 'textbox' as const, content: 'meeting room notes' }] }),
+      p2: makePage({ id: 'p2', blocks: [{ id: 'b2', type: 'section' as const, content: 'meeting section header' }] }),
     }
     const results = searchBlocks('meeting', pages)
     expect(results).toHaveLength(2)
