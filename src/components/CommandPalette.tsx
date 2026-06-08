@@ -114,7 +114,14 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
     ]
 
     const contentResults = searchBlocks(query, pages)
-    const contentItems: PaletteItem[] = contentResults.map(r => ({
+    // Deduplicate by pageId — one result per destination page
+    const seenPages = new Set<string>()
+    const uniqueContentResults = contentResults.filter(r => {
+      if (seenPages.has(r.pageId)) return false
+      seenPages.add(r.pageId)
+      return true
+    })
+    const contentItems: PaletteItem[] = uniqueContentResults.map(r => ({
       id: `content-${r.blockId}`,
       type: 'content' as const,
       icon: r.pageIcon,
@@ -125,7 +132,7 @@ export default function CommandPalette({ onClose, onOpenShortcuts, showShortcuts
 
     if (contentItems.length > 0) {
       filtered.push(
-        { id: 'content-header', type: 'content-header' as const, icon: <Search size={14} />, label: 'Content', sub: undefined, action: () => {} },
+        { id: 'content-header', type: 'content-header' as const, icon: null, label: 'Content', sub: undefined, action: () => {} },
         ...contentItems,
       )
     }
