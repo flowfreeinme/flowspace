@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { Activity, BadgeCheck, BookOpen, ClipboardList, FileText } from 'lucide-react'
+import { Activity, BadgeCheck, BookOpen, ClipboardList, FileText, ListChecks } from 'lucide-react'
 import AuthPage from '@/components/AuthPage'
 import RxAccessGate from './RxAccessGate'
 import RxFlashcardSession from './RxFlashcardSession'
+import RxKnowledgeLibrary from './RxKnowledgeLibrary'
 import RxQuizSession from './RxQuizSession'
 import { starterMedications } from './medications'
 import { createInitialProgress, ensureProgressForMedications, ensureProgressForSigCodes, getOverallMastery } from './mastery'
@@ -50,7 +51,17 @@ function createReadyProgress(progress: ProgressState | null) {
   return ensureProgressForSigCodes(medicationReady, sigCodeIds)
 }
 
-function ReviewQueue({ medications, progress }: { medications: Medication[]; progress: ProgressState }) {
+function ReviewQueue({
+  knowledgeOpen,
+  medications,
+  onToggleKnowledge,
+  progress,
+}: {
+  knowledgeOpen: boolean
+  medications: Medication[]
+  onToggleKnowledge: () => void
+  progress: ProgressState
+}) {
   const weakest = medications
     .map((medication) => {
       const medProgress = progress.medications[medication.id]
@@ -66,9 +77,19 @@ function ReviewQueue({ medications, progress }: { medications: Medication[]; pro
 
   return (
     <section className="rx-panel">
-      <div className="rx-section-heading">
-        <p className="rx-eyebrow">Review queue</p>
-        <h2>Medications to revisit</h2>
+      <div className="rx-section-heading rx-review-heading">
+        <div>
+          <p className="rx-eyebrow">Review queue</p>
+          <h2>Medications to revisit</h2>
+        </div>
+        <button
+          aria-expanded={knowledgeOpen}
+          className="rx-ghost-button rx-review-action"
+          onClick={onToggleKnowledge}
+        >
+          <ListChecks size={17} aria-hidden="true" />
+          {knowledgeOpen ? 'Hide testable knowledge' : 'View all testable knowledge'}
+        </button>
       </div>
       <div className="rx-review-list">
         {weakest.map(({ medication, confidence }) => (
@@ -94,6 +115,7 @@ export default function RxMasteryPage({ user }: Props) {
   const [loadingProgress, setLoadingProgress] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [screen, setScreen] = useState<Screen>('home')
+  const [showKnowledgeLibrary, setShowKnowledgeLibrary] = useState(false)
   const [sessionConfig, setSessionConfig] = useState<SessionConfig>({
     practiceArea: 'brandGeneric',
     questionType: 'brandToGeneric',
@@ -230,7 +252,13 @@ export default function RxMasteryPage({ user }: Props) {
               })}
             </div>
           </section>
-          <ReviewQueue medications={starterMedications} progress={readyProgress} />
+          <ReviewQueue
+            knowledgeOpen={showKnowledgeLibrary}
+            medications={starterMedications}
+            onToggleKnowledge={() => setShowKnowledgeLibrary((current) => !current)}
+            progress={readyProgress}
+          />
+          {showKnowledgeLibrary && <RxKnowledgeLibrary medications={starterMedications} sigCodes={sigCodes} />}
           <section className="rx-notice">
             <strong>Training note</strong>
             <span>

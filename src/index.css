@@ -387,6 +387,17 @@ body {
   color: #18332d;
 }
 
+.rx-review-heading {
+  align-items: center;
+}
+
+.rx-review-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 .rx-review-list {
   display: grid;
   gap: 8px;
@@ -408,6 +419,164 @@ body {
 
 .rx-review-row span {
   color: #52615c;
+}
+
+.rx-knowledge-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.rx-knowledge-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 430px);
+  gap: 16px;
+  align-items: end;
+}
+
+.rx-knowledge-top h2 {
+  margin: 0;
+  color: #18221f;
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.rx-knowledge-summary {
+  margin: 8px 0 0;
+  color: #52615c;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.rx-search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  border: 1px solid rgba(24, 34, 31, 0.16);
+  border-radius: 9px;
+  background: #fffefa;
+  color: #52615c;
+  padding: 0 12px;
+}
+
+.rx-search-box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #18221f;
+  font: inherit;
+  outline: 0;
+}
+
+.rx-segmented-control {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 4px;
+  border: 1px solid rgba(24, 34, 31, 0.12);
+  border-radius: 10px;
+  background: #edf4f1;
+  padding: 4px;
+}
+
+.rx-segmented-control button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #52615c;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 8px 10px;
+}
+
+.rx-segmented-control button.is-active {
+  background: #18332d;
+  color: #fffefa;
+}
+
+.rx-knowledge-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(620px, 62vh);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.rx-knowledge-row {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 0.9fr) minmax(0, 1.7fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid rgba(24, 34, 31, 0.12);
+  border-radius: 10px;
+  background: #fffefa;
+  padding: 12px;
+}
+
+.rx-knowledge-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #dcebf0;
+  color: #1d5d7e;
+}
+
+.rx-knowledge-name {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rx-knowledge-name strong {
+  color: #18221f;
+  font-size: 1rem;
+}
+
+.rx-knowledge-name span,
+.rx-knowledge-name small {
+  color: #52615c;
+}
+
+.rx-knowledge-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.rx-knowledge-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border-radius: 8px;
+  background: #f4f1e8;
+  padding: 8px;
+}
+
+.rx-knowledge-field dt {
+  color: #6c756f;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rx-knowledge-field dd {
+  margin: 0;
+  color: #18221f;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.rx-knowledge-empty {
+  margin: 0;
+  border-radius: 10px;
+  background: #fffefa;
+  color: #52615c;
+  font-weight: 800;
+  padding: 18px;
 }
 
 .rx-control-pill {
@@ -531,7 +700,8 @@ body {
   .rx-hero-band,
   .rx-gate-actions,
   .rx-tile-grid,
-  .rx-choice-grid {
+  .rx-choice-grid,
+  .rx-knowledge-top {
     grid-template-columns: 1fr;
   }
 
@@ -553,7 +723,18 @@ body {
   }
 
   .rx-notice,
-  .rx-session-topbar {
+  .rx-session-topbar,
+  .rx-review-heading,
+  .rx-knowledge-row {
     display: grid;
+  }
+
+  .rx-review-action,
+  .rx-segmented-control {
+    width: 100%;
+  }
+
+  .rx-review-action {
+    justify-content: center;
   }
 }
