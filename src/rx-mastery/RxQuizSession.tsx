@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
-import { recordAnswer } from './mastery'
-import { createQuestion } from './questions'
-import type { Medication, ProgressState, QuizQuestionType, SkillArea } from './types'
+import { recordAnswer, recordSigAnswer } from './mastery'
+import { createQuestion, createSigCodeQuestion } from './questions'
+import type { Medication, PracticeArea, ProgressState, QuizQuestionType, SigCode, SigCodeQuestionType } from './types'
 
 type Props = {
   medications: Medication[]
+  sigCodes: SigCode[]
   progress: ProgressState
-  skillArea: SkillArea
+  practiceArea: PracticeArea
   questionType: QuizQuestionType
+  sigQuestionType: SigCodeQuestionType
   onProgress: (progress: ProgressState) => void
   onExit: () => void
 }
@@ -20,13 +22,32 @@ function questionTypeForMixedReview(index: number): QuizQuestionType {
   return index % 2 === 0 ? 'brandToGeneric' : 'genericToBrand'
 }
 
-export default function RxQuizSession({ medications, progress, skillArea, questionType, onProgress, onExit }: Props) {
+function sigQuestionTypeForRound(index: number, preferredType: SigCodeQuestionType): SigCodeQuestionType {
+  if (index === 0) return preferredType
+  return index % 2 === 0 ? 'sigToMeaning' : 'meaningToSig'
+}
+
+export default function RxQuizSession({
+  medications,
+  sigCodes,
+  progress,
+  practiceArea,
+  questionType,
+  sigQuestionType,
+  onProgress,
+  onExit,
+}: Props) {
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [score, setScore] = useState(0)
   const medication = medications[index % medications.length]
-  const activeType = skillArea === 'mixedReview' ? questionTypeForMixedReview(index) : questionType
-  const question = useMemo(() => createQuestion(medication, medications, activeType), [activeType, medication, medications])
+  const sigCode = sigCodes[index % sigCodes.length]
+  const activeType = practiceArea === 'mixedReview' ? questionTypeForMixedReview(index) : questionType
+  const activeSigType = sigQuestionTypeForRound(index, sigQuestionType)
+  const question = useMemo(() => {
+    if (practiceArea === 'sigCodes') return createSigCodeQuestion(sigCode, sigCodes, activeSigType)
+    return createQuestion(medication, medications, activeType)
+  }, [activeSigType, activeType, medication, medications, practiceArea, sigCode, sigCodes])
   const isAnswered = selected !== null
   const roundComplete = index >= ROUND_LENGTH - 1
 
@@ -35,6 +56,16 @@ export default function RxQuizSession({ medications, progress, skillArea, questi
     const correct = choice === question.correctAnswer
     setSelected(choice)
     setScore((current) => current + (correct ? 1 : 0))
+    if (question.skillArea === 'sigCodes') {
+      onProgress(recordSigAnswer(progress, {
+        sigCodeId: question.sigCodeId,
+        correct,
+        mode: 'quiz',
+        answeredAt: new Date().toISOString(),
+      }))
+      return
+    }
+
     onProgress(recordAnswer(progress, {
       medicationId: question.medicationId,
       skillArea: question.skillArea,
@@ -52,7 +83,13 @@ export default function RxQuizSession({ medications, progress, skillArea, questi
         <strong>{score} correct</strong>
       </div>
       <div className="rx-question-card">
-        <p className="rx-eyebrow">{question.skillArea === 'controlStatus' ? 'Control status' : question.skillArea}</p>
+        <p className="rx-eyebrow">
+          {question.skillArea === 'sigCodes'
+            ? 'SIG codes'
+            : question.skillArea === 'controlStatus'
+              ? 'Control status'
+              : question.skillArea}
+        </p>
         <h2>{question.prompt}</h2>
         <div className="rx-choice-grid">
           {question.choices.map((choice) => {
@@ -75,10 +112,16 @@ export default function RxQuizSession({ medications, progress, skillArea, questi
         {isAnswered && (
           <div className="rx-feedback">
             <strong>{selected === question.correctAnswer ? 'Correct' : 'Review this one'}</strong>
-            <span>
-              {medication.brandName} is {medication.genericName}. Common training indication: {medication.indication}.
-              Control title: {medication.control}.
-            </span>
+            {question.skillArea === 'sigCodes' ? (
+              <span>
+                {sigCode.code} means {sigCode.meaning}. Category: {sigCode.category}.
+              </span>
+            ) : (
+              <span>
+                {medication.brandName} is {medication.genericName}. Common training indication: {medication.indication}.
+                Control title: {medication.control}.
+              </span>
+            )}
             {roundComplete ? (
               <button className="rx-primary-button" onClick={onExit}>Finish round</button>
             ) : (

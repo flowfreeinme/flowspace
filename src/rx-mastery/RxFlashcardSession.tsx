@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { recordAnswer } from './mastery'
-import type { Medication, ProgressState, SkillArea } from './types'
+import { recordAnswer, recordSigAnswer } from './mastery'
+import type { Medication, ProgressState, SigCode, SkillArea, PracticeArea } from './types'
 
 type Props = {
   medications: Medication[]
+  sigCodes: SigCode[]
   progress: ProgressState
-  skillArea: SkillArea
+  practiceArea: PracticeArea
   onProgress: (progress: ProgressState) => void
   onExit: () => void
 }
@@ -22,13 +23,27 @@ function promptForSkill(skillArea: ReturnType<typeof skillForFlashcard>) {
   return 'Recall the generic name'
 }
 
-export default function RxFlashcardSession({ medications, progress, skillArea, onProgress, onExit }: Props) {
+export default function RxFlashcardSession({ medications, sigCodes, progress, practiceArea, onProgress, onExit }: Props) {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const medication = medications[index % medications.length]
-  const activeSkill = skillForFlashcard(skillArea)
+  const sigCode = sigCodes[index % sigCodes.length]
+  const isSigSession = practiceArea === 'sigCodes'
+  const activeSkill = isSigSession ? 'brandGeneric' : skillForFlashcard(practiceArea as SkillArea)
 
   const grade = (correct: boolean) => {
+    if (isSigSession) {
+      onProgress(recordSigAnswer(progress, {
+        sigCodeId: sigCode.id,
+        correct,
+        mode: 'flashcard',
+        answeredAt: new Date().toISOString(),
+      }))
+      setFlipped(false)
+      setIndex((current) => current + 1)
+      return
+    }
+
     onProgress(recordAnswer(progress, {
       medicationId: medication.id,
       skillArea: activeSkill,
@@ -47,7 +62,19 @@ export default function RxFlashcardSession({ medications, progress, skillArea, o
         <span>Flashcard {index + 1}</span>
       </div>
       <button className={`rx-flashcard ${flipped ? 'is-flipped' : ''}`} onClick={() => setFlipped((value) => !value)}>
-        {!flipped ? (
+        {isSigSession && !flipped ? (
+          <>
+            <span className="rx-eyebrow">SIG code</span>
+            <strong className="rx-sig-code">{sigCode.code}</strong>
+            <small>Recall the meaning</small>
+          </>
+        ) : isSigSession ? (
+          <>
+            <span>{sigCode.meaning}</span>
+            <strong>{sigCode.category}</strong>
+            <small>{sigCode.code}</small>
+          </>
+        ) : !flipped ? (
           <>
             <span className="rx-eyebrow">Tap to reveal</span>
             <strong>{medication.brandName}</strong>

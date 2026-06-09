@@ -1,24 +1,26 @@
-import { getOverallMastery } from './mastery'
-import type { ProgressState, SkillArea } from './types'
+import { getOverallMastery, getSigCodeMastery } from './mastery'
+import type { PracticeArea, ProgressState, SkillArea } from './types'
 
 export type MasteryTile = {
-  skillArea: SkillArea
+  skillArea: PracticeArea
   label: string
   mastery: number
   description: string
 }
 
-const skillLabels: Record<SkillArea, string> = {
+const skillLabels: Record<PracticeArea, string> = {
   brandGeneric: 'Brand / Generic',
   indications: 'Indications',
   controlStatus: 'Control Status',
+  sigCodes: 'SIG Codes',
   mixedReview: 'Mixed Review',
 }
 
-const skillDescriptions: Record<SkillArea, string> = {
+const skillDescriptions: Record<PracticeArea, string> = {
   brandGeneric: 'Match medication brand and generic names.',
   indications: 'Practice common training indications.',
   controlStatus: 'Review Rx and controlled substance titles.',
+  sigCodes: 'Translate prescription SIG abbreviations.',
   mixedReview: 'Blend your weakest areas into one session.',
 }
 
@@ -35,12 +37,16 @@ export function getSkillMastery(
 }
 
 export function getMasteryTiles(progress: ProgressState): MasteryTile[] {
-  const skillAreas: SkillArea[] = ['brandGeneric', 'indications', 'controlStatus', 'mixedReview']
+  const skillAreas: PracticeArea[] = ['brandGeneric', 'indications', 'controlStatus', 'sigCodes', 'mixedReview']
 
   return skillAreas.map((skillArea) => ({
     skillArea,
     label: skillLabels[skillArea],
-    mastery: skillArea === 'mixedReview' ? getOverallMastery(progress) : getSkillMastery(progress, skillArea),
+    mastery: skillArea === 'mixedReview'
+      ? getOverallMastery(progress)
+      : skillArea === 'sigCodes'
+        ? getSigCodeMastery(progress)
+        : getSkillMastery(progress, skillArea),
     description: skillDescriptions[skillArea],
   }))
 }

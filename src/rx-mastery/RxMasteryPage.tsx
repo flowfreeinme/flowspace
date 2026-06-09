@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { Activity, BadgeCheck, BookOpen, ClipboardList } from 'lucide-react'
+import { Activity, BadgeCheck, BookOpen, ClipboardList, FileText } from 'lucide-react'
 import AuthPage from '@/components/AuthPage'
 import RxAccessGate from './RxAccessGate'
 import RxFlashcardSession from './RxFlashcardSession'
 import RxQuizSession from './RxQuizSession'
 import { starterMedications } from './medications'
-import { createInitialProgress, ensureProgressForMedications, getOverallMastery } from './mastery'
+import { createInitialProgress, ensureProgressForMedications, ensureProgressForSigCodes, getOverallMastery } from './mastery'
 import { getMasteryTiles, getWeakestPracticeTarget } from './recommendations'
 import { loadSavedProgress, saveSavedProgress } from './progressPersistence'
-import type { Medication, ProgressState, QuizQuestionType, SkillArea } from './types'
+import { sigCodes } from './sigCodes'
+import type { Medication, PracticeArea, ProgressState, QuizQuestionType, SigCodeQuestionType, SkillArea } from './types'
 
 type Props = {
   user: User | null
@@ -19,15 +20,18 @@ type Screen = 'home' | 'quiz' | 'flashcards'
 type AccessMode = 'gate' | 'auth' | 'guest'
 
 type SessionConfig = {
-  skillArea: SkillArea
+  practiceArea: PracticeArea
   questionType: QuizQuestionType
+  sigQuestionType: SigCodeQuestionType
 }
 
 const medicationIds = starterMedications.map((medication) => medication.id)
+const sigCodeIds = sigCodes.map((sigCode) => sigCode.id)
 const icons = {
   brandGeneric: BookOpen,
   indications: ClipboardList,
   controlStatus: BadgeCheck,
+  sigCodes: FileText,
   mixedReview: Activity,
 }
 
@@ -38,7 +42,12 @@ function questionTypeForSkill(skillArea: SkillArea): QuizQuestionType {
 }
 
 function createReadyProgress(progress: ProgressState | null) {
-  return ensureProgressForMedications(progress ?? createInitialProgress(medicationIds), medicationIds)
+  const medicationReady = ensureProgressForMedications(
+    progress ?? createInitialProgress(medicationIds, sigCodeIds),
+    medicationIds,
+  )
+
+  return ensureProgressForSigCodes(medicationReady, sigCodeIds)
 }
 
 function ReviewQueue({ medications, progress }: { medications: Medication[]; progress: ProgressState }) {
@@ -86,8 +95,9 @@ export default function RxMasteryPage({ user }: Props) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [screen, setScreen] = useState<Screen>('home')
   const [sessionConfig, setSessionConfig] = useState<SessionConfig>({
-    skillArea: 'brandGeneric',
+    practiceArea: 'brandGeneric',
     questionType: 'brandToGeneric',
+    sigQuestionType: 'sigToMeaning',
   })
 
   useEffect(() => {
@@ -113,8 +123,12 @@ export default function RxMasteryPage({ user }: Props) {
     [readyProgress],
   )
 
-  const startSession = (skillArea: SkillArea, nextScreen: Screen) => {
-    setSessionConfig({ skillArea, questionType: questionTypeForSkill(skillArea) })
+  const startSession = (practiceArea: PracticeArea, nextScreen: Screen) => {
+    setSessionConfig({
+      practiceArea,
+      questionType: practiceArea === 'sigCodes' ? 'brandToGeneric' : questionTypeForSkill(practiceArea),
+      sigQuestionType: 'sigToMeaning',
+    })
     setScreen(nextScreen)
   }
 
@@ -151,7 +165,7 @@ export default function RxMasteryPage({ user }: Props) {
           <p className="rx-eyebrow">Hidden Flowspace trainer</p>
           <h1>Rx Mastery</h1>
           <p className="rx-hero-copy">
-            Practice common brand names, generics, indications, and control titles in short focused rounds.
+            Practice common brand names, generics, indications, control titles, and SIG codes in short focused rounds.
           </p>
           <p className={`rx-save-status rx-save-status-${progressMode}`}>
             {signedIn
@@ -169,9 +183,11 @@ export default function RxMasteryPage({ user }: Props) {
       {screen === 'quiz' && (
         <RxQuizSession
           medications={starterMedications}
+          sigCodes={sigCodes}
           progress={readyProgress}
-          skillArea={sessionConfig.skillArea}
+          practiceArea={sessionConfig.practiceArea}
           questionType={sessionConfig.questionType}
+          sigQuestionType={sessionConfig.sigQuestionType}
           onProgress={updateProgress}
           onExit={() => setScreen('home')}
         />
@@ -180,8 +196,9 @@ export default function RxMasteryPage({ user }: Props) {
       {screen === 'flashcards' && (
         <RxFlashcardSession
           medications={starterMedications}
+          sigCodes={sigCodes}
           progress={readyProgress}
-          skillArea={sessionConfig.skillArea}
+          practiceArea={sessionConfig.practiceArea}
           onProgress={updateProgress}
           onExit={() => setScreen('home')}
         />

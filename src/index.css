@@ -320,7 +320,7 @@ body {
 
 .rx-tile-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
 }
 
@@ -505,6 +505,11 @@ body {
 
 .rx-flashcard strong {
   font-size: 2rem;
+}
+
+.rx-flashcard .rx-sig-code {
+  font-size: 3rem;
+  letter-spacing: 0;
 }
 
 .rx-grade-actions {

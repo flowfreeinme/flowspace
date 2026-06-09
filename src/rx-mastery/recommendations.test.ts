@@ -22,6 +22,7 @@ describe('recommendations', () => {
       'brandGeneric',
       'indications',
       'controlStatus',
+      'sigCodes',
       'mixedReview',
     ])
   })
