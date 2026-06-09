@@ -215,7 +215,7 @@ export default function RxMasteryPage({ user }: Props) {
               {getMasteryTiles(readyProgress).map((tile) => {
                 const Icon = icons[tile.skillArea]
                 return (
-                  <article className="rx-mastery-tile" key={tile.skillArea}>
+                  <article className="rx-mastery-tile" data-practice-area={tile.skillArea} key={tile.skillArea}>
                     <span className="rx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
                     <strong>{tile.label}</strong>
                     <span>{tile.description}</span>

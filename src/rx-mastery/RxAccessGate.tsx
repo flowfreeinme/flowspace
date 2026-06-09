@@ -12,8 +12,8 @@ export default function RxAccessGate({ onAuth, onGuest }: Props) {
         <p className="rx-eyebrow">Hidden Flowspace trainer</p>
         <h1>Rx Mastery</h1>
         <p>
-          Practice common brand/generic names, indications, and control titles. Choose how you want to play before
-          the round starts.
+          Practice common brand/generic names, indications, control titles, and SIG codes. Choose how you want to play
+          before the round starts.
         </p>
         <div className="rx-gate-actions">
           <button className="rx-choice-card" onClick={onAuth}>
