@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { recordAnswer, recordSigAnswer } from './mastery'
 import { createQuestion, createSigCodeQuestion } from './questions'
-import type { Medication, PracticeArea, ProgressState, QuizQuestionType, SigCode, SigCodeQuestionType } from './types'
+import { createMissedQuestionReview, createRoundReviewSummary, type MissedQuestionReplay, type MissedQuestionReview } from './quizReview'
+import type { Medication, PracticeArea, ProgressState, QuizQuestion, QuizQuestionType, SigCode, SigCodeQuestion, SigCodeQuestionType } from './types'
 
 type Props = {
   medications: Medication[]
@@ -16,6 +17,14 @@ type Props = {
 
 const ROUND_LENGTH = 10
 
+type ActiveQuestion = {
+  question: QuizQuestion | SigCodeQuestion
+  explanation: string
+  replay: MissedQuestionReplay
+}
+
+type QuizScreen = 'question' | 'summary'
+
 function questionTypeForMixedReview(index: number): QuizQuestionType {
   if (index % 3 === 0) return 'control'
   if (index % 3 === 1) return 'indication'
@@ -25,6 +34,64 @@ function questionTypeForMixedReview(index: number): QuizQuestionType {
 function sigQuestionTypeForRound(index: number, preferredType: SigCodeQuestionType): SigCodeQuestionType {
   if (index === 0) return preferredType
   return index % 2 === 0 ? 'sigToMeaning' : 'meaningToSig'
+}
+
+function medicationExplanation(medication: Medication) {
+  return `${medication.brandName} is ${medication.genericName}. Common training indication: ${medication.indication}. Control title: ${medication.control}.`
+}
+
+function sigCodeExplanation(sigCode: SigCode) {
+  return `${sigCode.code} means ${sigCode.meaning}. Category: ${sigCode.category}.`
+}
+
+function createMedicationActiveQuestion(
+  medication: Medication,
+  medications: Medication[],
+  questionType: QuizQuestionType,
+): ActiveQuestion {
+  const question = createQuestion(medication, medications, questionType)
+
+  return {
+    question,
+    explanation: medicationExplanation(medication),
+    replay: {
+      kind: 'medication',
+      itemId: medication.id,
+      questionType,
+    },
+  }
+}
+
+function createSigActiveQuestion(
+  sigCode: SigCode,
+  sigCodes: SigCode[],
+  questionType: SigCodeQuestionType,
+): ActiveQuestion {
+  const question = createSigCodeQuestion(sigCode, sigCodes, questionType)
+
+  return {
+    question,
+    explanation: sigCodeExplanation(sigCode),
+    replay: {
+      kind: 'sigCode',
+      itemId: sigCode.id,
+      questionType,
+    },
+  }
+}
+
+function createReviewActiveQuestion(
+  missed: MissedQuestionReview,
+  medications: Medication[],
+  sigCodes: SigCode[],
+): ActiveQuestion {
+  if (missed.replay.kind === 'sigCode') {
+    const sigCode = sigCodes.find((candidate) => candidate.id === missed.replay.itemId) ?? sigCodes[0]
+    return createSigActiveQuestion(sigCode, sigCodes, missed.replay.questionType)
+  }
+
+  const medication = medications.find((candidate) => candidate.id === missed.replay.itemId) ?? medications[0]
+  return createMedicationActiveQuestion(medication, medications, missed.replay.questionType)
 }
 
 export default function RxQuizSession({
@@ -40,22 +107,48 @@ export default function RxQuizSession({
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [score, setScore] = useState(0)
+  const [screen, setScreen] = useState<QuizScreen>('question')
+  const [missedQuestions, setMissedQuestions] = useState<MissedQuestionReview[]>([])
+  const [reviewDeck, setReviewDeck] = useState<MissedQuestionReview[]>([])
   const medication = medications[index % medications.length]
   const sigCode = sigCodes[index % sigCodes.length]
+  const reviewingMisses = reviewDeck.length > 0
+  const activeRoundTotal = reviewingMisses ? reviewDeck.length : ROUND_LENGTH
+  const currentReviewItem = reviewingMisses ? reviewDeck[index] : null
   const activeType = practiceArea === 'mixedReview' ? questionTypeForMixedReview(index) : questionType
   const activeSigType = sigQuestionTypeForRound(index, sigQuestionType)
-  const question = useMemo(() => {
-    if (practiceArea === 'sigCodes') return createSigCodeQuestion(sigCode, sigCodes, activeSigType)
-    return createQuestion(medication, medications, activeType)
-  }, [activeSigType, activeType, medication, medications, practiceArea, sigCode, sigCodes])
+  const activeQuestion = useMemo(() => {
+    if (currentReviewItem) return createReviewActiveQuestion(currentReviewItem, medications, sigCodes)
+    if (practiceArea === 'sigCodes') return createSigActiveQuestion(sigCode, sigCodes, activeSigType)
+    return createMedicationActiveQuestion(medication, medications, activeType)
+  }, [activeSigType, activeType, currentReviewItem, medication, medications, practiceArea, sigCode, sigCodes])
+  const question = activeQuestion.question
+  const summary = useMemo(
+    () => createRoundReviewSummary({ score, total: activeRoundTotal, missed: missedQuestions }),
+    [activeRoundTotal, missedQuestions, score],
+  )
   const isAnswered = selected !== null
-  const roundComplete = index >= ROUND_LENGTH - 1
+  const roundComplete = index >= activeRoundTotal - 1
 
   const choose = (choice: string) => {
     if (isAnswered) return
     const correct = choice === question.correctAnswer
     setSelected(choice)
     setScore((current) => current + (correct ? 1 : 0))
+    if (!correct) {
+      setMissedQuestions((current) => [
+        ...current,
+        createMissedQuestionReview({
+          id: `${question.id}-${reviewingMisses ? 'review' : 'round'}-${index}-${current.length}`,
+          prompt: question.prompt,
+          selectedAnswer: choice,
+          correctAnswer: question.correctAnswer,
+          explanation: activeQuestion.explanation,
+          replay: activeQuestion.replay,
+        }),
+      ])
+    }
+
     if (question.skillArea === 'sigCodes') {
       onProgress(recordSigAnswer(progress, {
         sigCodeId: question.sigCodeId,
@@ -75,11 +168,81 @@ export default function RxQuizSession({
     }))
   }
 
+  const moveNext = () => {
+    setSelected(null)
+    setIndex((current) => current + 1)
+  }
+
+  const showSummary = () => {
+    setSelected(null)
+    setScreen('summary')
+  }
+
+  const reviewMissed = () => {
+    setReviewDeck(summary.missed)
+    setMissedQuestions([])
+    setScore(0)
+    setIndex(0)
+    setSelected(null)
+    setScreen('question')
+  }
+
+  if (screen === 'summary') {
+    return (
+      <section className="rx-session-panel">
+        <div className="rx-session-topbar">
+          <button className="rx-ghost-button" onClick={onExit}>Back</button>
+          <span>{reviewingMisses ? 'Missed review summary' : 'Round summary'}</span>
+          <strong>{summary.score} / {summary.total} correct</strong>
+        </div>
+        <div className="rx-review-summary-card">
+          <div className="rx-review-summary-hero">
+            <p className="rx-eyebrow">{summary.perfect ? 'Perfect round' : 'Review missed'}</p>
+            <h2>{summary.score} / {summary.total} correct</h2>
+            <span>
+              {summary.perfect
+                ? 'No missed questions in this round.'
+                : `${summary.missedCount} ${summary.missedCount === 1 ? 'question needs' : 'questions need'} another look.`}
+            </span>
+          </div>
+
+          {summary.missed.length > 0 && (
+            <div className="rx-missed-list">
+              {summary.missed.map((missed) => (
+                <article className="rx-missed-row" key={missed.id}>
+                  <strong>{missed.prompt}</strong>
+                  <dl>
+                    <div>
+                      <dt>Your answer</dt>
+                      <dd>{missed.selectedAnswer}</dd>
+                    </div>
+                    <div>
+                      <dt>Correct answer</dt>
+                      <dd>{missed.correctAnswer}</dd>
+                    </div>
+                  </dl>
+                  <span>{missed.explanation}</span>
+                </article>
+              ))}
+            </div>
+          )}
+
+          <div className="rx-review-summary-actions">
+            {summary.canReviewMissed && (
+              <button className="rx-primary-button" onClick={reviewMissed}>Review Missed</button>
+            )}
+            <button className="rx-ghost-button" onClick={onExit}>Finish Round</button>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="rx-session-panel">
       <div className="rx-session-topbar">
         <button className="rx-ghost-button" onClick={onExit}>Back</button>
-        <span>Question {index + 1} of {ROUND_LENGTH}</span>
+        <span>{reviewingMisses ? 'Missed review' : 'Question'} {index + 1} of {activeRoundTotal}</span>
         <strong>{score} correct</strong>
       </div>
       <div className="rx-question-card">
@@ -112,23 +275,11 @@ export default function RxQuizSession({
         {isAnswered && (
           <div className="rx-feedback">
             <strong>{selected === question.correctAnswer ? 'Correct' : 'Review this one'}</strong>
-            {question.skillArea === 'sigCodes' ? (
-              <span>
-                {sigCode.code} means {sigCode.meaning}. Category: {sigCode.category}.
-              </span>
-            ) : (
-              <span>
-                {medication.brandName} is {medication.genericName}. Common training indication: {medication.indication}.
-                Control title: {medication.control}.
-              </span>
-            )}
+            <span>{activeQuestion.explanation}</span>
             {roundComplete ? (
-              <button className="rx-primary-button" onClick={onExit}>Finish round</button>
+              <button className="rx-primary-button" onClick={showSummary}>View summary</button>
             ) : (
-              <button
-                className="rx-primary-button"
-                onClick={() => { setSelected(null); setIndex((current) => current + 1) }}
-              >
+              <button className="rx-primary-button" onClick={moveNext}>
                 Next question
               </button>
             )}

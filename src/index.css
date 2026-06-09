@@ -665,6 +665,91 @@ body {
   background: #eef5f7;
 }
 
+.rx-review-summary-card {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  min-height: 360px;
+  padding: 24px;
+  border: 1px solid rgba(24, 34, 31, 0.14);
+  border-radius: 10px;
+  background: #fffefa;
+}
+
+.rx-review-summary-hero {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #eef5f7;
+}
+
+.rx-review-summary-hero h2 {
+  margin: 0;
+  color: #18221f;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.rx-review-summary-hero span {
+  color: #52615c;
+  font-weight: 800;
+}
+
+.rx-missed-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rx-missed-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(24, 34, 31, 0.12);
+  border-radius: 10px;
+  background: #f8f6ef;
+}
+
+.rx-missed-row dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.rx-missed-row dl div {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border-radius: 8px;
+  background: #fffefa;
+}
+
+.rx-missed-row dt {
+  color: #6c756f;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rx-missed-row dd {
+  margin: 0;
+  color: #18221f;
+  font-weight: 900;
+}
+
+.rx-missed-row span {
+  color: #52615c;
+  font-weight: 700;
+}
+
+.rx-review-summary-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
 .rx-flashcard {
   place-items: center;
   text-align: center;
@@ -725,7 +810,9 @@ body {
   .rx-notice,
   .rx-session-topbar,
   .rx-review-heading,
-  .rx-knowledge-row {
+  .rx-knowledge-row,
+  .rx-missed-row dl,
+  .rx-review-summary-actions {
     display: grid;
   }
 
