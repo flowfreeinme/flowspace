@@ -22,6 +22,7 @@ import { useNotifications } from '@/stores/notifications'
 import { useInvites } from '@/stores/invites'
 import { supabase } from '@/lib/supabase'
 import { appChannel } from '@/lib/appChannel'
+import RxMasteryPage from '@/rx-mastery/RxMasteryPage'
 
 export default function App() {
   const { init: initAuth, user, loading: authLoading } = useAuth()
@@ -33,10 +34,12 @@ export default function App() {
   const { loadSharedWithMe, loadMyShares } = useSharing()
   const { add: addToast } = useNotifications()
   const { loadPendingInvites, loadOwnerNotifs } = useInvites()
+  const isRxMasteryRoute = window.location.pathname.replace(/\/+$/, '') === '/rx-mastery'
 
   useEffect(() => { initAuth() }, [])
 
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (!user) return
     const key = `flowspace_announcement_${ANNOUNCEMENT.id}`
     if (localStorage.getItem(key)) return
@@ -44,31 +47,35 @@ export default function App() {
       addToast({ type: 'info', message: ANNOUNCEMENT.message, sub: ANNOUNCEMENT.sub })
       localStorage.setItem(key, '1')
     }, 1500)
-  }, [user])
+  }, [isRxMasteryRoute, user])
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (authLoading || !user) return
     if (!initialized) initWorkspace()
-  }, [authLoading, user, initialized])
+  }, [authLoading, user, initialized, isRxMasteryRoute])
 
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (authLoading || !user?.email) return
     loadSharedWithMe(user.email)
     loadMyShares(user.id)
     loadPendingInvites(user.email)
     loadOwnerNotifs(user.id)
-  }, [authLoading, user])
+  }, [authLoading, user, isRxMasteryRoute])
 
   // Cross-device sync: reload workspace when app regains focus or another device saves
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (!user || !initialized) return
     function onVisibility() {
       if (document.visibilityState === 'visible') syncFromRemote()
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [user, initialized])
+  }, [user, initialized, isRxMasteryRoute])
 
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (!user || !initialized) return
     const channel = supabase
       .channel(`workspace-sync:${user.id}`)
@@ -76,10 +83,11 @@ export default function App() {
         () => syncFromRemote())
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [user?.id, initialized])
+  }, [user?.id, initialized, isRxMasteryRoute])
 
   // Realtime: persistent broadcast channel — handles invite + notification pings instantly
   useEffect(() => {
+    if (isRxMasteryRoute) return
     appChannel
       .on('broadcast', { event: 'invite-ping' }, ({ payload }) => {
         const me = useAuth.getState().user?.email?.toLowerCase()
@@ -96,10 +104,11 @@ export default function App() {
         useInvites.getState().loadOwnerNotifs(myId)
       })
       .subscribe()
-  }, [])
+  }, [isRxMasteryRoute])
 
   // Realtime: broadcast → instant board removal when owner revokes access
   useEffect(() => {
+    if (isRxMasteryRoute) return
     if (!user?.email) return
     const channel = supabase
       .channel(`access:${user.email.trim().toLowerCase()}`)
@@ -113,10 +122,11 @@ export default function App() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [user?.email])
+  }, [user?.email, isRxMasteryRoute])
 
   // Global keyboard shortcuts
   useEffect(() => {
+    if (isRxMasteryRoute) return
     function onKey(e: KeyboardEvent) {
       const mod = e.metaKey || e.ctrlKey
 
@@ -148,10 +158,14 @@ export default function App() {
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [tabs, activeTabId])
+  }, [tabs, activeTabId, isRxMasteryRoute])
 
   if (authLoading) {
     return <div className="app-screen bg-surface-0 flex items-center justify-center text-gray-500 text-sm">Loading…</div>
+  }
+
+  if (isRxMasteryRoute) {
+    return <RxMasteryPage user={user} />
   }
 
   if (!user) {

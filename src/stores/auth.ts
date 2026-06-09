@@ -46,7 +46,7 @@ export const useAuth = create<AuthStore>((set, get) => ({
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: window.location.href,
       },
     })
     return error?.message ?? null
