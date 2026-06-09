@@ -1,4 +1,4 @@
-import type { Medication, QuizQuestion, QuizQuestionType } from './types'
+import type { Medication, QuizQuestion, QuizQuestionType, SigCode, SigCodeQuestion, SigCodeQuestionType } from './types'
 
 const skillForType = (type: QuizQuestionType): QuizQuestion['skillArea'] => {
   if (type === 'indication') return 'indications'
@@ -45,5 +45,37 @@ export function createQuestion(
     choices,
     correctAnswer,
     skillArea: skillForType(type),
+  }
+}
+
+const sigAnswerForType = (sigCode: SigCode, type: SigCodeQuestionType): string => {
+  if (type === 'sigToMeaning') return sigCode.meaning
+  return sigCode.code
+}
+
+const sigPromptForType = (sigCode: SigCode, type: SigCodeQuestionType): string => {
+  if (type === 'sigToMeaning') return `What does SIG code ${sigCode.code} mean?`
+  return `Which SIG code means "${sigCode.meaning}"?`
+}
+
+export function createSigCodeQuestion(
+  sigCode: SigCode,
+  allSigCodes: SigCode[],
+  type: SigCodeQuestionType,
+): SigCodeQuestion {
+  const correctAnswer = sigAnswerForType(sigCode, type)
+  const distractors = allSigCodes
+    .map((candidate) => sigAnswerForType(candidate, type))
+    .filter((answer) => answer !== correctAnswer)
+  const choices = rotateChoices(Array.from(new Set([correctAnswer, ...distractors])).slice(0, 4), `${sigCode.id}-${type}`)
+
+  return {
+    id: `${sigCode.id}-${type}`,
+    sigCodeId: sigCode.id,
+    type,
+    prompt: sigPromptForType(sigCode, type),
+    choices,
+    correctAnswer,
+    skillArea: 'sigCodes',
   }
 }

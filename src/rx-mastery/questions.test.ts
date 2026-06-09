@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createQuestion } from './questions'
-import type { Medication } from './types'
+import { createQuestion, createSigCodeQuestion } from './questions'
+import type { Medication, SigCode } from './types'
 
 const meds: Medication[] = [
   {
@@ -45,6 +45,13 @@ const meds: Medication[] = [
   },
 ]
 
+const sigCodes: SigCode[] = [
+  { id: 'bid-twice-daily', code: 'BID', meaning: 'Twice Daily', category: 'Frequency' },
+  { id: 'tid-three-times-daily', code: 'TID', meaning: 'Three Times Daily', category: 'Frequency' },
+  { id: 'prn-when-required', code: 'PRN', meaning: 'When Required', category: 'Timing' },
+  { id: 'aa-to-affected-area', code: 'AA', meaning: 'To Affected Area', category: 'Application' },
+]
+
 describe('createQuestion', () => {
   it('creates brand-to-generic questions with unique choices', () => {
     const question = createQuestion(meds[0], meds, 'brandToGeneric')
@@ -58,5 +65,23 @@ describe('createQuestion', () => {
   it('creates generic-to-brand and control questions', () => {
     expect(createQuestion(meds[0], meds, 'genericToBrand').correctAnswer).toBe('Lipitor')
     expect(createQuestion(meds[1], meds, 'control').skillArea).toBe('controlStatus')
+  })
+
+  it('creates SIG code-to-meaning questions with unique choices', () => {
+    const question = createSigCodeQuestion(sigCodes[0], sigCodes, 'sigToMeaning')
+
+    expect(question.prompt).toContain('BID')
+    expect(question.correctAnswer).toBe('Twice Daily')
+    expect(question.skillArea).toBe('sigCodes')
+    expect(new Set(question.choices).size).toBe(question.choices.length)
+    expect(question.choices).toContain('Twice Daily')
+  })
+
+  it('creates SIG meaning-to-code questions', () => {
+    const question = createSigCodeQuestion(sigCodes[1], sigCodes, 'meaningToSig')
+
+    expect(question.prompt).toContain('Three Times Daily')
+    expect(question.correctAnswer).toBe('TID')
+    expect(question.choices).toContain('TID')
   })
 })
