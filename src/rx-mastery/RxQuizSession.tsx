@@ -188,22 +188,41 @@ export default function RxQuizSession({
   }
 
   if (screen === 'summary') {
+    const ringCircumference = 163.4
+    const ringOffset = (1 - summary.score / summary.total) * ringCircumference
+
     return (
       <section className="rx-session-panel">
         <div className="rx-session-topbar">
           <button className="rx-ghost-button" onClick={onExit}>Back</button>
           <span>{reviewingMisses ? 'Missed review summary' : 'Round summary'}</span>
-          <strong>{summary.score} / {summary.total} correct</strong>
         </div>
         <div className="rx-review-summary-card">
-          <div className="rx-review-summary-hero">
-            <p className="rx-eyebrow">{summary.perfect ? 'Perfect round' : 'Review missed'}</p>
-            <h2>{summary.score} / {summary.total} correct</h2>
-            <span>
-              {summary.perfect
-                ? 'No missed questions in this round.'
-                : `${summary.missedCount} ${summary.missedCount === 1 ? 'question needs' : 'questions need'} another look.`}
-            </span>
+          <div className="rx-score-hero">
+            <div className="rx-score-ring">
+              <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,252,0.15)" strokeWidth="6" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none"
+                  stroke="#e8a245" strokeWidth="6"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={ringOffset}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="rx-score-ring-num">{summary.score}</div>
+            </div>
+            <div>
+              <p className="rx-score-hero-eyebrow">
+                {reviewingMisses ? 'Missed review' : summary.perfect ? 'Perfect round' : 'Round complete'}
+              </p>
+              <p className="rx-score-hero-label">{summary.score} / {summary.total} correct</p>
+              <p className="rx-score-hero-sub">
+                {summary.perfect
+                  ? 'No missed questions — great work!'
+                  : `${summary.missedCount} ${summary.missedCount === 1 ? 'question needs' : 'questions need'} another look`}
+              </p>
+            </div>
           </div>
 
           {summary.missed.length > 0 && (
@@ -211,16 +230,16 @@ export default function RxQuizSession({
               {summary.missed.map((missed) => (
                 <article className="rx-missed-row" key={missed.id}>
                   <strong>{missed.prompt}</strong>
-                  <dl>
-                    <div>
-                      <dt>Your answer</dt>
-                      <dd>{missed.selectedAnswer}</dd>
+                  <div className="rx-missed-answers">
+                    <div className="rx-answer-chip rx-answer-wrong">
+                      <span className="rx-chip-label">Your answer</span>
+                      <span className="rx-chip-value">{missed.selectedAnswer}</span>
                     </div>
-                    <div>
-                      <dt>Correct answer</dt>
-                      <dd>{missed.correctAnswer}</dd>
+                    <div className="rx-answer-chip rx-answer-right">
+                      <span className="rx-chip-label">Correct</span>
+                      <span className="rx-chip-value">{missed.correctAnswer}</span>
                     </div>
-                  </dl>
+                  </div>
                   <span>{missed.explanation}</span>
                 </article>
               ))}
@@ -229,7 +248,7 @@ export default function RxQuizSession({
 
           <div className="rx-review-summary-actions">
             {summary.canReviewMissed && (
-              <button className="rx-primary-button" onClick={reviewMissed}>Review Missed</button>
+              <button className="rx-primary-button" onClick={reviewMissed}>Review Missed ({summary.missedCount})</button>
             )}
             <button className="rx-ghost-button" onClick={onExit}>Finish Round</button>
           </div>
@@ -240,10 +259,13 @@ export default function RxQuizSession({
 
   return (
     <section className="rx-session-panel">
+      <div className="rx-quiz-progress-track">
+        <div className="rx-quiz-progress-fill" style={{ width: `${(index / activeRoundTotal) * 100}%` }} />
+      </div>
       <div className="rx-session-topbar">
         <button className="rx-ghost-button" onClick={onExit}>Back</button>
         <span>{reviewingMisses ? 'Missed review' : 'Question'} {index + 1} of {activeRoundTotal}</span>
-        <strong>{score} correct</strong>
+        <span className="rx-score-pill">{score} ✓</span>
       </div>
       <div className="rx-question-card">
         <p className="rx-eyebrow">
