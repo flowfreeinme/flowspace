@@ -42,6 +42,19 @@ function questionTypeForSkill(skillArea: SkillArea): QuizQuestionType {
   return 'brandToGeneric'
 }
 
+function masteryLevel(pct: number): 'novice' | 'learning' | 'proficient' | 'strong' | 'mastered' {
+  if (pct >= 90) return 'mastered'
+  if (pct >= 75) return 'strong'
+  if (pct >= 50) return 'proficient'
+  if (pct >= 25) return 'learning'
+  return 'novice'
+}
+
+function masteryLabel(pct: number): string {
+  const level = masteryLevel(pct)
+  return level.charAt(0).toUpperCase() + level.slice(1)
+}
+
 function createReadyProgress(progress: ProgressState | null) {
   const medicationReady = ensureProgressForMedications(
     progress ?? createInitialProgress(medicationIds, sigCodeIds),
@@ -241,8 +254,13 @@ export default function RxMasteryPage({ user }: Props) {
                     <span className="rx-tile-icon" aria-hidden="true"><Icon size={20} /></span>
                     <strong>{tile.label}</strong>
                     <span>{tile.description}</span>
-                    <meter min="0" max="100" value={tile.mastery} />
-                    <small>{tile.mastery}% mastery</small>
+                    <div className="rx-tile-bar-track">
+                      <div className="rx-tile-bar-fill" style={{ width: `${tile.mastery}%` }} data-level={masteryLevel(tile.mastery)} />
+                    </div>
+                    <div className="rx-tile-bar-meta">
+                      <span className="rx-tile-pct">{tile.mastery}%</span>
+                      <span className="rx-tile-level" data-level={masteryLevel(tile.mastery)}>{masteryLabel(tile.mastery)}</span>
+                    </div>
                     <span className="rx-tile-actions">
                       <button className="rx-tile-action" onClick={() => startSession(tile.skillArea, 'quiz')}>Quiz</button>
                       <button className="rx-tile-action rx-tile-action-secondary" onClick={() => startSession(tile.skillArea, 'flashcards')}>Cards</button>
