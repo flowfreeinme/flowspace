@@ -61,39 +61,50 @@ export default function RxFlashcardSession({ medications, sigCodes, progress, pr
         <button className="rx-ghost-button" onClick={onExit}>Back</button>
         <span>Flashcard {index + 1}</span>
       </div>
-      <button className={`rx-flashcard ${flipped ? 'is-flipped' : ''}`} onClick={() => setFlipped((value) => !value)}>
-        {isSigSession && !flipped ? (
-          <>
-            <span className="rx-eyebrow">SIG code</span>
-            <strong className="rx-sig-code">{sigCode.code}</strong>
-            <small>Recall the meaning</small>
-          </>
-        ) : isSigSession ? (
-          <>
-            <span>{sigCode.meaning}</span>
-            <strong>{sigCode.category}</strong>
-            <small>{sigCode.code}</small>
-          </>
-        ) : !flipped ? (
-          <>
-            <span className="rx-eyebrow">Tap to reveal</span>
-            <strong>{medication.brandName}</strong>
-            <small>{promptForSkill(activeSkill)}</small>
-          </>
-        ) : (
-          <>
-            <span>{medication.genericName}</span>
-            <strong>{medication.indication}</strong>
-            <small>{medication.control}</small>
-          </>
-        )}
-      </button>
+      <div className="rx-card-scene">
+        <div
+          className={`rx-card-3d ${flipped ? 'is-flipped' : ''}`}
+          onClick={() => { if (!flipped) setFlipped(true) }}
+        >
+          <div className="rx-card-face rx-card-front">
+            {isSigSession ? (
+              <>
+                <span className="rx-eyebrow">SIG code</span>
+                <strong className="rx-sig-code">{sigCode.code}</strong>
+                <small>Tap to reveal meaning</small>
+              </>
+            ) : (
+              <>
+                <span className="rx-eyebrow">Tap to reveal</span>
+                <strong>{medication.brandName}</strong>
+                <small>{promptForSkill(activeSkill)}</small>
+              </>
+            )}
+          </div>
+          <div className="rx-card-face rx-card-back">
+            {isSigSession ? (
+              <>
+                <span className="rx-eyebrow">{sigCode.category}</span>
+                <strong>{sigCode.meaning}</strong>
+                <small>{sigCode.code}</small>
+              </>
+            ) : (
+              <>
+                <span className="rx-eyebrow">{medication.indication}</span>
+                <strong>{medication.genericName}</strong>
+                <small>{medication.control}</small>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
       {flipped && (
         <div className="rx-grade-actions">
-          <button className="rx-ghost-button" onClick={() => grade(false)}>Missed it</button>
-          <button className="rx-primary-button" onClick={() => grade(true)}>Knew it</button>
+          <button className="rx-grade-btn-missed" onClick={() => grade(false)}>✗ Not yet</button>
+          <button className="rx-grade-btn-knew" onClick={() => grade(true)}>✓ Got it</button>
         </div>
       )}
+      <p className="rx-card-counter">Card {index + 1}</p>
     </section>
   )
 }
