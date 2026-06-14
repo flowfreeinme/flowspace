@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { recordAnswer, recordSigAnswer } from './mastery'
 import { createQuestion, createSigCodeQuestion } from './questions'
+import { createQuizRoundDeck } from './quizRound'
 import { createMissedQuestionReview, createRoundReviewSummary, type MissedQuestionReplay, type MissedQuestionReview } from './quizReview'
 import type { Medication, PracticeArea, ProgressState, QuizQuestion, QuizQuestionType, SigCode, SigCodeQuestion, SigCodeQuestionType } from './types'
 
@@ -24,17 +25,6 @@ type ActiveQuestion = {
 }
 
 type QuizScreen = 'question' | 'summary'
-
-function questionTypeForMixedReview(index: number): QuizQuestionType {
-  if (index % 3 === 0) return 'control'
-  if (index % 3 === 1) return 'indication'
-  return index % 2 === 0 ? 'brandToGeneric' : 'genericToBrand'
-}
-
-function sigQuestionTypeForRound(index: number, preferredType: SigCodeQuestionType): SigCodeQuestionType {
-  if (index === 0) return preferredType
-  return index % 2 === 0 ? 'sigToMeaning' : 'meaningToSig'
-}
 
 function medicationExplanation(medication: Medication) {
   return `${medication.brandName} is ${medication.genericName}. Common training indication: ${medication.indication}. Control title: ${medication.control}.`
@@ -81,17 +71,17 @@ function createSigActiveQuestion(
 }
 
 function createReviewActiveQuestion(
-  missed: MissedQuestionReview,
+  replay: MissedQuestionReplay,
   medications: Medication[],
   sigCodes: SigCode[],
 ): ActiveQuestion {
-  if (missed.replay.kind === 'sigCode') {
-    const sigCode = sigCodes.find((candidate) => candidate.id === missed.replay.itemId) ?? sigCodes[0]
-    return createSigActiveQuestion(sigCode, sigCodes, missed.replay.questionType)
+  if (replay.kind === 'sigCode') {
+    const sigCode = sigCodes.find((candidate) => candidate.id === replay.itemId) ?? sigCodes[0]
+    return createSigActiveQuestion(sigCode, sigCodes, replay.questionType)
   }
 
-  const medication = medications.find((candidate) => candidate.id === missed.replay.itemId) ?? medications[0]
-  return createMedicationActiveQuestion(medication, medications, missed.replay.questionType)
+  const medication = medications.find((candidate) => candidate.id === replay.itemId) ?? medications[0]
+  return createMedicationActiveQuestion(medication, medications, replay.questionType)
 }
 
 export default function RxQuizSession({
@@ -110,18 +100,23 @@ export default function RxQuizSession({
   const [screen, setScreen] = useState<QuizScreen>('question')
   const [missedQuestions, setMissedQuestions] = useState<MissedQuestionReview[]>([])
   const [reviewDeck, setReviewDeck] = useState<MissedQuestionReview[]>([])
-  const medication = medications[index % medications.length]
-  const sigCode = sigCodes[index % sigCodes.length]
+  const [roundDeck] = useState(() => createQuizRoundDeck({
+    practiceArea,
+    medications,
+    sigCodes,
+    questionType,
+    sigQuestionType,
+    roundLength: ROUND_LENGTH,
+  }))
   const reviewingMisses = reviewDeck.length > 0
-  const activeRoundTotal = reviewingMisses ? reviewDeck.length : ROUND_LENGTH
-  const currentReviewItem = reviewingMisses ? reviewDeck[index] : null
-  const activeType = practiceArea === 'mixedReview' ? questionTypeForMixedReview(index) : questionType
-  const activeSigType = sigQuestionTypeForRound(index, sigQuestionType)
+  const activeRoundTotal = reviewingMisses ? reviewDeck.length : roundDeck.length
+  const fallbackReplay: MissedQuestionReplay = practiceArea === 'sigCodes'
+    ? { kind: 'sigCode', itemId: sigCodes[0]?.id ?? '', questionType: sigQuestionType }
+    : { kind: 'medication', itemId: medications[0]?.id ?? '', questionType }
+  const currentRoundItem = (reviewingMisses ? reviewDeck[index]?.replay : roundDeck[index]) ?? fallbackReplay
   const activeQuestion = useMemo(() => {
-    if (currentReviewItem) return createReviewActiveQuestion(currentReviewItem, medications, sigCodes)
-    if (practiceArea === 'sigCodes') return createSigActiveQuestion(sigCode, sigCodes, activeSigType)
-    return createMedicationActiveQuestion(medication, medications, activeType)
-  }, [activeSigType, activeType, currentReviewItem, medication, medications, practiceArea, sigCode, sigCodes])
+    return createReviewActiveQuestion(currentRoundItem, medications, sigCodes)
+  }, [currentRoundItem, medications, sigCodes])
   const question = activeQuestion.question
   const summary = useMemo(
     () => createRoundReviewSummary({ score, total: activeRoundTotal, missed: missedQuestions }),
