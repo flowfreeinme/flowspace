@@ -25,11 +25,14 @@ export type SigCodeCategory =
   | 'Application'
   | 'Direction'
   | 'Dosage Form'
+  | 'Drug Name'
   | 'Frequency'
   | 'Measurement'
+  | 'Medical Term'
   | 'Route'
   | 'Symptom'
   | 'Timing'
+  | 'Unit'
 
 export type SigCode = {
   id: string
