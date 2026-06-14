@@ -6,15 +6,15 @@ export default {
     extend: {
       colors: {
         surface: {
-          0: '#0f0f0f',
-          1: '#1a1a1a',
-          2: '#242424',
-          3: '#2e2e2e',
-          4: '#383838',
+          0: 'rgb(var(--surface-0) / <alpha-value>)',
+          1: 'rgb(var(--surface-1) / <alpha-value>)',
+          2: 'rgb(var(--surface-2) / <alpha-value>)',
+          3: 'rgb(var(--surface-3) / <alpha-value>)',
+          4: 'rgb(var(--surface-4) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: '#7c6af7',
-          hover: '#9080ff',
+          DEFAULT: 'rgb(var(--accent-rgb) / <alpha-value>)',
+          hover: 'rgb(var(--accent-hover-rgb) / <alpha-value>)',
         },
       },
       fontFamily: {
