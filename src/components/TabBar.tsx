@@ -22,7 +22,7 @@ export default function TabBar({ onOpenShortcuts }: TabBarProps) {
       {/* Sidebar toggle — flush left */}
       <button
         onClick={toggleSidebar}
-        className="flex items-center justify-center w-10 h-full border-r border-surface-3 shrink-0 text-gray-500 hover:text-gray-200 hover:bg-surface-2/50 transition-colors"
+        className="focus-ring flex items-center justify-center w-10 h-full border-r border-surface-3 shrink-0 text-gray-500 hover:text-gray-200 hover:bg-surface-2/50 transition-colors"
         title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
@@ -31,12 +31,13 @@ export default function TabBar({ onOpenShortcuts }: TabBarProps) {
       {/* Home button */}
       <button
         onClick={() => setHomeActive()}
-        className={`flex items-center justify-center w-10 h-full border-r border-surface-3 shrink-0 transition-colors ${
+        className={`focus-ring relative flex items-center justify-center w-10 h-full border-r border-surface-3 shrink-0 transition-colors ${
           isHome ? 'bg-surface-2 text-white' : 'text-gray-500 hover:text-gray-200 hover:bg-surface-2/50'
         }`}
         title="Home"
       >
         <Home size={14} />
+        {isHome && <span className="pointer-events-none absolute inset-x-1.5 bottom-0 h-0.5 rounded-full bg-accent" />}
       </button>
 
       {tabs.map(tab => {
@@ -46,7 +47,7 @@ export default function TabBar({ onOpenShortcuts }: TabBarProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`group flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-3 max-w-[180px] shrink-0 transition-colors ${
+            className={`group focus-ring relative flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-3 max-w-[180px] shrink-0 transition-colors ${
               isActive ? 'bg-surface-2 text-white' : 'text-gray-400 hover:text-gray-200 hover:bg-surface-2/50'
             }`}
           >
@@ -58,13 +59,14 @@ export default function TabBar({ onOpenShortcuts }: TabBarProps) {
             >
               <X size={12} />
             </span>
+            {isActive && <span className="pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent" />}
           </button>
         )
       })}
 
       <button
         onClick={handleNewTab}
-        className="flex items-center justify-center w-8 h-full text-gray-500 hover:text-gray-200 hover:bg-surface-2/50 transition-colors shrink-0"
+        className="focus-ring flex items-center justify-center w-8 h-full text-gray-500 hover:text-gray-200 hover:bg-surface-2/50 transition-colors shrink-0"
       >
         <Plus size={14} />
       </button>
@@ -74,7 +76,7 @@ export default function TabBar({ onOpenShortcuts }: TabBarProps) {
 
       <button
         onClick={onOpenShortcuts}
-        className="flex h-full w-9 items-center justify-center border-l border-surface-3 text-gray-500 transition-colors hover:bg-surface-2/50 hover:text-gray-200"
+        className="focus-ring flex h-full w-9 items-center justify-center border-l border-surface-3 text-gray-500 transition-colors hover:bg-surface-2/50 hover:text-gray-200"
         title="Keyboard shortcuts"
       >
         <Keyboard size={14} />
