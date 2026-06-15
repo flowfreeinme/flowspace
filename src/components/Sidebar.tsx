@@ -92,11 +92,11 @@ function PageItem({
           setExpanded(true)
         }}
         onDrop={e => onDropOnFolder(pageId, e)}
-        className={`group flex items-center gap-1 py-1 pr-2 rounded-md cursor-pointer text-sm transition-colors ${
+        className={`group focus-ring relative flex items-center gap-1 py-1 pr-2 pl-2 rounded-md cursor-pointer text-sm transition-colors ${
           isDropTarget
             ? 'bg-accent/25 text-white ring-1 ring-accent/70'
             : isActive && !isFolder
-              ? 'bg-accent/20 text-white'
+              ? 'bg-accent/20 text-white before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:rounded-full before:bg-accent'
               : draggingPageId === pageId
                 ? 'text-gray-500 opacity-50'
                 : 'text-gray-400 hover:text-gray-100 hover:bg-surface-3'
@@ -385,9 +385,9 @@ export default function Sidebar() {
         {/* Workspace */}
         <div className="px-3 pt-3 pb-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Workspace</span>
+            <span className="micro-label">Workspace</span>
             <div className="flex items-center gap-0.5">
-              <button onClick={handleNewFolder} title="New folder" className="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-surface-3 transition-colors">
+              <button onClick={handleNewFolder} title="New folder" className="focus-ring p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-surface-3 transition-colors">
                 <FolderPlus size={14} />
               </button>
               <div ref={addMenuRef} className="relative">
@@ -395,7 +395,7 @@ export default function Sidebar() {
                   onClick={() => setAddMenuOpen(v => !v)}
                   title="Add"
                   aria-expanded={addMenuOpen}
-                  className="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-surface-3 transition-colors"
+                  className="focus-ring p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-surface-3 transition-colors"
                 >
                   <Plus size={14} />
                 </button>
@@ -441,7 +441,7 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
           {!query && favoriteIds.length > 0 && (
             <div className="mb-2">
-              <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Favorites</div>
+              <div className="micro-label px-2 pb-1">Favorites</div>
               {favoriteIds.map(id => (
                 <QuickBoardItem key={id} pageId={id} icon={<Star size={11} className="fill-yellow-400 text-yellow-400" />} onClick={() => openTab(id)} />
               ))}
@@ -450,7 +450,7 @@ export default function Sidebar() {
 
           {!query && recentIds.length > 0 && (
             <div className="mb-2">
-              <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Recent</div>
+              <div className="micro-label px-2 pb-1">Recent</div>
               {recentIds.map(id => (
                 <QuickBoardItem key={id} pageId={id} icon={<Clock size={11} />} onClick={() => openTab(id)} />
               ))}
@@ -486,7 +486,7 @@ export default function Sidebar() {
             <div className="mt-3 border-t border-surface-3/50 pt-2">
               <button
                 onClick={() => setShowArchived(v => !v)}
-                className="flex w-full items-center justify-between px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:text-gray-400"
+                className="flex w-full items-center justify-between px-2 pb-1 micro-label transition-colors hover:text-gray-400"
               >
                 Archived
                 <span>{showArchived ? 'Hide' : archivedIds.length}</span>
@@ -587,7 +587,7 @@ export default function Sidebar() {
                 ref={folderNameInputRef}
                 value={folderNameDialog.value}
                 onChange={e => setFolderNameDialog({ ...folderNameDialog, value: e.target.value })}
-                className="w-full rounded-lg border border-surface-4 bg-surface-1 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-gray-700 focus:border-accent"
+                className="focus-ring w-full rounded-lg border border-surface-4 bg-surface-1 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-gray-700 focus:border-accent"
                 placeholder="New folder"
               />
             </div>
