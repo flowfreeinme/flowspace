@@ -287,17 +287,25 @@ export default function HomeScreen() {
     <div className="flex-1 min-h-0 overflow-hidden bg-surface-0">
       <div className="flex h-full flex-col px-5 pb-5 pt-5">
         <div className="mb-5 shrink-0">
-          <p className="mb-0.5 text-xs text-gray-500">
+          <p className="mb-1 text-xs tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
             {greeting(hours)}&nbsp;-&nbsp;
             {DAYS[today.getDay()]}, {MONTHS[todayM]} {todayD}, {todayY}
           </p>
           <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold leading-none text-white tabular-nums md:text-6xl">
+            <span
+              className="text-5xl font-bold leading-none tabular-nums md:text-6xl"
+              style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
+            >
               {displayHour}:{pad(now.getMinutes())}
             </span>
             <div className="mb-1 flex flex-col">
-              <span className="text-xl font-semibold leading-tight text-accent tabular-nums">{pad(now.getSeconds())}</span>
-              <span className="text-xs leading-tight text-gray-500">{ampm}</span>
+              <span
+                className="text-xl font-semibold leading-tight tabular-nums"
+                style={{ backgroundImage: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}
+              >
+                {pad(now.getSeconds())}
+              </span>
+              <span className="text-xs leading-tight" style={{ color: 'var(--text-tertiary)' }}>{ampm}</span>
             </div>
           </div>
         </div>
@@ -361,24 +369,31 @@ export default function HomeScreen() {
             backgroundSize: editingHome && !isMobile ? 'calc((100% - 55px) / 12) 112px' : undefined,
           }}
         >
-          {widgets.map(widget => (
-            <WidgetShell
-              key={widget.id}
-              widget={widget}
-              editingHome={editingHome}
-              isResizing={activeResizeWidgetId === widget.id}
-              isDragging={activeDragWidgetId === widget.id}
-              openSettings={openSettingsWidget === widget.id}
-              onOpenSettings={() => setOpenSettingsWidget(widget.id)}
-              onCloseSettings={() => setOpenSettingsWidget(null)}
-              onStartResize={(e, corner) => startWidgetResize(e, widget, corner)}
-              onStartDrag={e => startWidgetDrag(e, widget)}
-              onRemove={() => removeHomeCenterWidget(widget.id)}
-              settingsForm={renderSettingsForm(widget)}
-            >
-              {renderWidget(widget)}
-            </WidgetShell>
-          ))}
+          {widgets.length === 0 && !editingHome ? (
+            <div className="col-span-full row-span-full flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <p style={{ color: 'var(--text-secondary)' }} className="text-sm font-medium">Your home is empty</p>
+              <p style={{ color: 'var(--text-tertiary)' }} className="text-xs">Add widgets to see your day at a glance.</p>
+            </div>
+          ) : (
+            widgets.map(widget => (
+              <WidgetShell
+                key={widget.id}
+                widget={widget}
+                editingHome={editingHome}
+                isResizing={activeResizeWidgetId === widget.id}
+                isDragging={activeDragWidgetId === widget.id}
+                openSettings={openSettingsWidget === widget.id}
+                onOpenSettings={() => setOpenSettingsWidget(widget.id)}
+                onCloseSettings={() => setOpenSettingsWidget(null)}
+                onStartResize={(e, corner) => startWidgetResize(e, widget, corner)}
+                onStartDrag={e => startWidgetDrag(e, widget)}
+                onRemove={() => removeHomeCenterWidget(widget.id)}
+                settingsForm={renderSettingsForm(widget)}
+              >
+                {renderWidget(widget)}
+              </WidgetShell>
+            ))
+          )}
         </div>
 
         <div className="mt-5 shrink-0">

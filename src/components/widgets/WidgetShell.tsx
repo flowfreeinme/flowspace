@@ -78,8 +78,10 @@ export default function WidgetShell({
     <section
       onClickCapture={handleClickCapture}
       onPointerDown={handlePointerDown}
-      className={`group/widget relative min-h-0 overflow-hidden rounded-2xl border bg-surface-1 shadow-sm transition-colors ${
-        editingHome ? 'select-none border-accent/45 ring-1 ring-accent/20' : 'border-surface-3'
+      className={`group/widget relative min-h-0 overflow-hidden rounded-2xl border bg-surface-1 shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ${
+        editingHome
+          ? 'select-none border-accent/45 ring-1 ring-accent/20'
+          : 'border-surface-3 focus-within:border-accent/40 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[var(--shadow-md)]'
       } ${isResizing ? 'z-20 border-accent ring-2 ring-accent/30' : ''} ${
         isDragging ? 'z-20 opacity-75 cursor-grabbing' : editingHome && !isResizing ? 'cursor-grab' : ''
       }`}
