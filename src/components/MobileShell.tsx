@@ -1,6 +1,6 @@
 // src/components/MobileShell.tsx
-import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Clock, FileText, Home, LayoutDashboard, Search, Star, Users } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronRight, Clock, FileText, Home, LayoutDashboard, Search, Star, Users } from 'lucide-react'
 import { useWorkspace } from '@/stores/workspace'
 import { useSharing } from '@/stores/sharing'
 import type { Page } from '@/types'
@@ -15,6 +15,8 @@ import NotificationsMenu from './NotificationsMenu'
 import AvatarMenu from './AvatarMenu'
 import CommandPalette from './CommandPalette'
 import BoardTemplateModal from './BoardTemplateModal'
+import BottomTabBar from './BottomTabBar'
+import { getActiveMobileTab, type MobilePanel } from '@/lib/mobileTabs'
 
 interface Props {
   paletteOpen: boolean
@@ -93,7 +95,8 @@ function MobileWorkspaceItem({
 export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
   const { tabs, activeTabId, rootPages, pages, createPage, openTab, setHomeActive, openTemplatePicker } = useWorkspace()
   const { sharedWithMe } = useSharing()
-  const [tabPickerOpen, setTabPickerOpen] = useState(false)
+  const [panel, setPanel] = useState<MobilePanel>('none')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [sortMode, setSortMode] = useState<WorkspaceSortMode>(getStoredWorkspaceSortMode)
@@ -111,18 +114,18 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
       useWorkspace.setState(s => ({ pages: { ...s.pages, [pageId]: { ...pageData, parentId: null } } }))
     }
     openTab(pageId)
-    setTabPickerOpen(false)
+    setPanel('none')
   }
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Escape') return
       if (paletteOpen) { onClosePalette(); return }
-      if (tabPickerOpen) { setTabPickerOpen(false); return }
+      if (panel !== 'none') { setPanel('none'); return }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [paletteOpen, tabPickerOpen, onClosePalette])
+  }, [paletteOpen, panel, onClosePalette])
 
   useEffect(() => {
     const syncSortMode = () => setSortMode(getStoredWorkspaceSortMode())
@@ -134,9 +137,13 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
     }
   }, [])
 
+  useEffect(() => {
+    if (panel === 'search') searchInputRef.current?.focus()
+  }, [panel])
+
   function openWorkspacePage(pageId: string) {
     openTab(pageId)
-    setTabPickerOpen(false)
+    setPanel('none')
     setQuery('')
   }
 
@@ -149,7 +156,7 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
   }
 
   function handleNewBoard() {
-    setTabPickerOpen(false)
+    setPanel('none')
     setQuery('')
     openTemplatePicker(null)
   }
@@ -157,7 +164,7 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
   function handleNewPage() {
     const id = createPage(null)
     openTab(id)
-    setTabPickerOpen(false)
+    setPanel('none')
     setQuery('')
   }
 
@@ -166,32 +173,24 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
 
       {/* ── Header ── */}
       <div className="mobile-shell-header bg-surface-1 border-b border-surface-3 shrink-0 relative z-30">
-        <div className="flex items-center h-12 px-2 gap-2">
-        {/* Tab picker pill */}
-        <button
-          onClick={() => setTabPickerOpen(p => !p)}
-          className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-surface-3 text-sm min-w-0"
-        >
+        <div className="flex items-center h-12 px-3 gap-2">
           <span className="text-xs shrink-0">{activePage?.icon ?? '🏠'}</span>
-          <span className="truncate flex-1 text-left text-white">
+          <span className="truncate flex-1 text-left font-medium text-white">
             {activePage?.title || (activeTabId === null ? 'Home' : 'Untitled')}
           </span>
-          <ChevronDown size={14} className="text-gray-500 shrink-0" />
-        </button>
-
-        <NotificationsMenu />
-        <AvatarMenu />
+          <NotificationsMenu />
+          <AvatarMenu />
         </div>
       </div>
 
       {/* ── Workspace picker dropdown ── */}
-      {tabPickerOpen && (
+      {panel !== 'none' && (
         <>
-          <div className="fixed inset-0 z-20" onClick={() => setTabPickerOpen(false)} />
+          <div className="fixed inset-0 z-20" onClick={() => setPanel('none')} />
           <div className="mobile-shell-dropdown absolute left-0 right-0 z-30 bg-surface-2 border-b border-surface-3 shadow-xl overflow-y-auto">
             <div className="px-4 py-3 border-b border-surface-3">
               <button
-                onClick={() => { setHomeActive(); setTabPickerOpen(false); setQuery('') }}
+                onClick={() => { setHomeActive(); setPanel('none'); setQuery('') }}
                 className={`mb-3 flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                   activeTabId === null ? 'bg-surface-3 text-white' : 'text-gray-400 hover:bg-surface-3 hover:text-white'
                 }`}
@@ -202,10 +201,11 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
               <div className="flex items-center gap-2 rounded-lg border border-surface-3 bg-surface-1 px-3 py-2">
                 <Search size={14} className="shrink-0 text-gray-600" />
                 <input
+                  ref={searchInputRef}
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search workspace"
-                  className="min-w-0 flex-1 bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none"
+                  className="input min-w-0 flex-1 bg-transparent px-0 text-sm text-gray-200 placeholder-gray-600 outline-none border-0"
                 />
               </div>
             </div>
@@ -332,6 +332,13 @@ export default function MobileShell({ paletteOpen, onClosePalette }: Props) {
         )}
       </div>
 
+      <BottomTabBar
+        active={getActiveMobileTab({ activeTabId, panel })}
+        onHome={() => { setHomeActive(); setPanel('none'); setQuery('') }}
+        onBoards={() => setPanel(p => (p === 'boards' ? 'none' : 'boards'))}
+        onSearch={() => setPanel('search')}
+        onNew={handleNewBoard}
+      />
       {paletteOpen && <CommandPalette onClose={onClosePalette} onOpenShortcuts={() => {}} showShortcutsAction={false} />}
       <BoardTemplateModal />
     </div>
