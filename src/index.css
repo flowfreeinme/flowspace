@@ -96,6 +96,10 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+.mobile-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @layer components {
   .fs-card {
     background-color: rgb(var(--surface-2));
