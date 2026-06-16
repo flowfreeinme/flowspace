@@ -1,4 +1,5 @@
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface ToolboxItem {
   icon: React.ReactNode
@@ -16,10 +17,12 @@ interface BoardToolboxProps {
 }
 
 export default function BoardToolbox({ zoom, toolboxItems, onZoomIn, onZoomOut, onResetView }: BoardToolboxProps) {
+  const isMobile = useIsMobile()
   return (
     <div
       className="fixed right-6 z-40 flex flex-col bg-surface-2 border border-surface-4 rounded-2xl shadow-2xl overflow-hidden"
-      style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+      // On mobile, sit clear of the bottom tab bar (~48px) instead of overlapping it
+      style={{ bottom: isMobile ? 'calc(4rem + env(safe-area-inset-bottom, 0px))' : 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
       onMouseDown={e => e.stopPropagation()}
       onTouchStart={e => e.stopPropagation()}
     >

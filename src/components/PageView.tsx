@@ -4,6 +4,7 @@ import { useWorkspace } from '@/stores/workspace'
 import BlockEditor from './BlockEditor'
 import DrawingCanvas from './DrawingCanvas'
 import LassoOverlay from './LassoOverlay'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const EMOJIS = ['📄','📝','📋','📌','⭐','🎯','💡','🔥','✅','📊','🗂️','🚀','💬','🎨','📅','🔖']
 
@@ -22,6 +23,7 @@ export default function PageView({ pageId }: PageViewProps) {
   const [ctxMenu, setCtxMenu] = useState<ContextMenu | null>(null)
   const [showDrawing, setShowDrawing] = useState(false)
   const [showLasso, setShowLasso] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (titleRef.current && titleRef.current.textContent !== page?.title) {
@@ -115,7 +117,10 @@ export default function PageView({ pageId }: PageViewProps) {
       </div>
 
       {/* Floating toolbox */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-1 bg-surface-2 border border-surface-4 rounded-2xl p-1.5 shadow-2xl">
+      <div
+        className="fixed right-6 z-40 flex flex-col gap-1 bg-surface-2 border border-surface-4 rounded-2xl p-1.5 shadow-2xl"
+        style={{ bottom: isMobile ? 'calc(4rem + env(safe-area-inset-bottom, 0px))' : 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         {toolboxItems.map(t => (
           <button
             key={t.label}
